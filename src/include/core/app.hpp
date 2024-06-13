@@ -7,8 +7,10 @@
 #include "input.hpp"
 #include "log.hpp"
 #include "render.hpp"
+#include "inputHandler.hpp"
 #include "../resource/resourceMgr.hpp"
 #include "../scene/sceneMgr.hpp"
+#include "../interface/signal.hpp"
 
 class Application {
 public:
@@ -43,6 +45,8 @@ public:
 
     void                                    Update();
 
+    void                                    ReceiveSignal(SignalID signal);
+
 private:
     Application();
 
@@ -54,6 +58,7 @@ private:
     EntityMgr                               entityMgr;
     ResourceMgr                             resourceMgr;
     SceneMgr                                sceneMgr;
+    InputHandler                            inputHandler;
 
     std::array<ISystem*, NumSystems>        systemList;
     std::unique_ptr<LogSystem>              logSystem;

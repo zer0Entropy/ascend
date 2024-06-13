@@ -39,10 +39,22 @@ void Application::Update() {
         window.clear();
 
         for(auto system : systemList) {
-            system->Update();
+            if(this->GetStatus() == StatusID::Running) {
+                system->Update();
+            }
+            else {
+                return;
+            }
         }
 
         window.display();
+    }
+}
+
+void Application::ReceiveSignal(SignalID signal) {
+    if(     signal == SignalID::FatalError
+        ||  signal == SignalID::WindowClosed) {
+        Stop();
     }
 }
 
@@ -59,6 +71,8 @@ void Application::Start() {
     systemList[(int)ISystem::SystemID::LogSystem] = logSystem.get();
     systemList[(int)ISystem::SystemID::InputSystem] = inputSystem.get();
     systemList[(int)ISystem::SystemID::RenderSystem] = renderSystem.get();
+
+    inputSystem->Subscribe(&inputHandler);
     
     sf::Vector2u                windowSize{1920, 1080};
     std::string                 windowTitle{"ASCEND"};

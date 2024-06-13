@@ -16,6 +16,7 @@ FetchContent_MakeAvailable(json)
 add_executable(ascend       src/main.cpp
                             src/core/app.cpp
                             src/core/input.cpp
+                            src/core/inputHandler.cpp
                             src/core/log.cpp
                             src/core/render.cpp
                             src/component/boundingBox.cpp
@@ -30,7 +31,8 @@ add_executable(ascend       src/main.cpp
                             src/resource/font.cpp
                             src/resource/resourceMgr.cpp
                             src/scene/scene.cpp
-                            src/scene/sceneMgr.cpp)
+                            src/scene/sceneMgr.cpp
+                            src/interface/signal.cpp)
 
 #target_compile_options(ascend PRIVATE -fstandalone-debug)
 
