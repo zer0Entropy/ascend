@@ -19,11 +19,13 @@ public:
     SpriteMgr&                              GetSpriteMgr() const;
     TextMgr&                                GetTextMgr() const;
     BoundingBoxMgr&                         GetBoundingBoxMgr() const;
-    const std::vector<Entity>&              GetButtonList() const;
+    
+    const std::vector<Entity>&              GetEntityList() const;
 
 private:
     SpriteMgr                               spriteMgr;
     TextMgr                                 textMgr;
     BoundingBoxMgr                          boundingBoxMgr;
-    std::vector<Entity>                     buttons;
+    
+    std::vector<Entity>                     entityList;
 };
