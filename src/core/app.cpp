@@ -92,10 +92,13 @@ void Application::Start() {
     std::string                 windowTitle{"ASCEND"};
     window.create(sf::VideoMode(windowSize.x, windowSize.y), windowTitle, sf::Style::Fullscreen);
 
-    sceneMgr.Push(std::make_unique<Scene>());
+    sceneMgr.Push(std::make_unique<Scene>(entityMgr, resourceMgr));
 }
 
 void Application::Stop() {
+    if(logSystem) {
+        logSystem->Update();
+    }
     if(window.isOpen()) {
         window.close();
     }

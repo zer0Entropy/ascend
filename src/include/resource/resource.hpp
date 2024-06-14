@@ -5,7 +5,12 @@
 
 using ResourceID = std::string;
 
-class Resource: public ISerializeable {
+struct ResourceToken {
+    ResourceID  id;
+    std::string path;
+};
+
+class Resource {
 public:
     enum class TypeID {
         Font,
@@ -19,9 +24,6 @@ public:
     const ResourceID&       GetID() const;
     TypeID                  GetTypeID() const;
     const std::string&      GetPath() const;
-
-    void                    LoadFromJSON(const nlohmann::json& json) override;
-    nlohmann::json          SaveToJSON() const override;
 
 private:
     ResourceID              id;

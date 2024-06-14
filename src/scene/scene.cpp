@@ -1,80 +1,77 @@
 #include "../include/scene/scene.hpp"
 #include "../include/core/app.hpp"
 
-Scene::Scene():
-    ISerializeable{} {
+Scene::Scene(EntityMgr& entMgr, ResourceMgr& resMgr):
+    ISerializeable{},
+    ILogMsgPublisher{},
+    entityMgr{entMgr},
+    resourceMgr{resMgr} {
 
 }
 
 void Scene::LoadFromJSON(const nlohmann::json& json) {
-    EntityMgr& entityMgr{Application::GetInstance().GetEntityMgr()};
+    const auto& findEntities{json.find("entities")};
+    if(findEntities != json.end()) {
+        int numEntities{findEntities.value()};
+        for(int index = 0; index < numEntities; ++index) {
+            entityList.push_back(entityMgr.CreateEntity());
+        }
+    }
+
+    const auto& findResources{json.find("resources")};
+    if(findResources != json.end()) {
+        const auto& resourceJSON{findResources.value()};
+        LoadResourceList(resourceJSON);
+    }
 
     const auto& findSprites{json.find("sprites")};
-    const auto& findTexts{json.find("texts")};
-    const auto& findBounds{json.find("bounds")};
-    const auto& findAlignLabels{json.find("alignLabels")};
-    
     if(findSprites != json.end()) {
+        int index = 0;
         for(auto spriteJSON : findSprites.value()) {
-            Entity owner{entityMgr.CreateEntity()};
-            this->entityList.push_back(owner);
-            spriteMgr.Add(owner);
-            Sprite* sprite{spriteMgr.Get(owner)};
-            sprite->LoadFromJSON(spriteJSON);
+            LoadSprite(entityList.at(index++), spriteJSON);
         }
     }
+
+    const auto& findTexts{json.find("texts")};
     if(findTexts != json.end()) {
-        int entityIndex = 0;
+        int index = 0;
         for(auto textJSON : findTexts.value()) {
-            Entity owner{this->entityList.at(entityIndex++)};
-            textMgr.Add(owner);
-            Text* text{textMgr.Get(owner)};
-            text->LoadFromJSON(textJSON);
+            LoadText(entityList.at(index++), textJSON);
         }
     }
+    
+    const auto& findBounds{json.find("bounds")};
     if(findBounds != json.end()) {
-        int entityIndex = 0;
+        int index = 0;
         for(auto boundsJSON : findBounds.value()) {
-            Entity owner{this->entityList.at(entityIndex++)};
-            boundingBoxMgr.Add(owner);
-            BoundingBox* bounds{boundingBoxMgr.Get(owner)};
-            bounds->LoadFromJSON(boundsJSON);
-        }
-    }
-    std::vector<Alignment> alignList;
-    if(findAlignLabels != json.end()) {
-        for(auto alignLabelJSON : findAlignLabels.value()) {
-            auto findAlignment{alignLabelJSON.find("alignment")};
-            std::string alignName{findAlignment.value().template get<std::string>()};
-            if(alignName.compare(AlignmentNames.at((int)Alignment::Left)) == 0) {
-                alignList.push_back(Alignment::Left);
-            }
-            else if(alignName.compare(AlignmentNames.at((int)Alignment::Center)) == 0) {
-                alignList.push_back(Alignment::Center);
-            }
-            else if(alignName.compare(AlignmentNames.at((int)Alignment::Right)) == 0) {
-                alignList.push_back(Alignment::Right);
-            }
+            LoadBoundingBox(entityList.at(index++), boundsJSON);
         }
     }
 
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     auto& labelMgr{Application::GetInstance().GetRenderSystem()->GetLabelMgr()};
-    auto& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignLabelMgr()};
-    int entityIndex = 0;
     for(const auto& entity : entityList) {
         auto    bounds{boundingBoxMgr.Get(entity)};
         auto    sprite{spriteMgr.Get(entity)};
         auto    text{textMgr.Get(entity)};
-
         if(bounds && sprite) {
             renderableMgr.Add(entity, *bounds, *sprite);
         }
         if(bounds && text) {
             labelMgr.Add(entity, *bounds, *text);
-            alignLabelMgr.Add(entity, alignList.at(entityIndex), *labelMgr.Get(entity));
         }
-        entityIndex++;
+    }
+
+    auto& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignLabelMgr()};
+    const auto& findAlignLabels{json.find("alignLabels")};
+    if(findAlignLabels != json.end()) {
+        int index = 0;
+        for(auto alignLabelJSON : findAlignLabels.value()) {
+            Entity      owner{entityList.at(index++)};
+            Alignment   alignment{LoadAlignLabel(alignLabelJSON)};
+            Label*      label{labelMgr.Get(owner)};
+            alignLabelMgr.Add(owner, alignment, *label);
+        }
     }
 }
 
@@ -130,4 +127,85 @@ TextureSwitcherMgr& Scene::GetTextureSwitcherMgr() const {
 
 const std::vector<Entity>& Scene::GetEntityList() const {
     return entityList;
+}
+
+const std::vector<ResourceToken>& Scene::GetFontList() const {
+    return fontList;
+}
+
+const std::vector<ResourceToken>& Scene::GetTextureList() const {
+    return textureList;
+}
+
+void Scene::LoadResourceList(const nlohmann::json& json) {
+    const auto& findFonts{json.find("fonts")};
+    const auto& findTextures{json.find("textures")};
+    if(findFonts != json.end()) {
+        for(auto fontJSON : findFonts.value()) {
+            const auto& findID{fontJSON.find("id")};
+            const auto& findPath{fontJSON.find("path")};
+            if(     findID != fontJSON.end()
+                &&  findPath != fontJSON.end()) {
+                const ResourceToken font{
+                    findID.value().template get<std::string>(),
+                    findPath.value().template get<std::string>()
+                };
+                fontList.push_back(font);
+            }
+        }
+        for(const auto& font : fontList) {
+            resourceMgr.LoadFont(font.id, font.path);
+        }
+    }
+    if(findTextures != json.end()) {
+        for(auto textureJSON : findTextures.value()) {
+            const auto& findID{textureJSON.find("id")};
+            const auto& findPath{textureJSON.find("path")};
+            if(     findID != textureJSON.end()
+                &&  findPath != textureJSON.end()) {
+                const ResourceToken texture{
+                    findID.value().template get<std::string>(),
+                    findPath.value().template get<std::string>()
+                };
+                textureList.push_back(texture);
+            }
+        }
+        for(const auto& texture : textureList) {
+            resourceMgr.LoadTexture(texture.id, texture.path);
+        }
+    }
+}
+
+void Scene::LoadSprite(Entity owner, const nlohmann::json& json) {
+    spriteMgr.Add(owner);
+    Sprite* sprite{spriteMgr.Get(owner)};
+    sprite->LoadFromJSON(json);
+}
+
+void Scene::LoadText(Entity owner, const nlohmann::json& json) {
+    textMgr.Add(owner);
+    Text* text{textMgr.Get(owner)};
+    text->LoadFromJSON(json);
+}
+
+void Scene::LoadBoundingBox(Entity owner, const nlohmann::json& json) {
+    boundingBoxMgr.Add(owner);
+    BoundingBox* bounds{boundingBoxMgr.Get(owner)};
+    bounds->LoadFromJSON(json);
+}
+
+Alignment Scene::LoadAlignLabel(const nlohmann::json& json) const {
+    Alignment alignment{Alignment::Left};
+    const auto& findAlignment{json.find("alignment")};
+    const std::string alignName{findAlignment.value().template get<std::string>()};
+    if(alignName.compare(AlignmentNames.at((int)Alignment::Left)) == 0) {
+        alignment = Alignment::Left;
+    }
+    else if(alignName.compare(AlignmentNames.at((int)Alignment::Center)) == 0) {
+        alignment = Alignment::Center;
+    }
+    else if(alignName.compare(AlignmentNames.at((int)Alignment::Right)) == 0) {
+        alignment = Alignment::Right;
+    }
+    return alignment;
 }

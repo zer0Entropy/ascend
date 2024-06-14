@@ -20,14 +20,14 @@ sf::Text& Text::GetText() const {
 
 void Text::LoadFromJSON(const nlohmann::json& json) {
     ResourceMgr& resourceMgr{Application::GetInstance().GetResourceMgr()};
-
+    
     const auto& findContents{json.find("contents")};
-    const auto& findFontParam{json.find("fontParameters")};
-    const auto& findAttachments{json.find("attachments")};
     if(findContents != json.end()) {
         std::string contentsFound{findContents.value().template get<std::string>()};
         SetContents(contentsFound);
     }
+
+    const auto& findFontParam{json.find("fontParameters")};
     if(findFontParam != json.end()) {
         const auto& fontParamJSON{findFontParam.value()};
         const auto& findID{fontParamJSON.find("id")};
@@ -42,47 +42,26 @@ void Text::LoadFromJSON(const nlohmann::json& json) {
             fontParamFound.fontSize = findSize.value();
         }
         if(findOutlineColor != fontParamJSON.end()) {
-            int colorValue{findOutlineColor.value()};
-            fontParamFound.outlineColor = sf::Color{(sf::Uint32)colorValue};
+            std::string hexString{findOutlineColor.value().template get<std::string>()};
+            fontParamFound.outlineColor = GetColorFromHex(hexString);
         }
         if(findFillColor != fontParamJSON.end()) {
-            int colorValue{findFillColor.value()};
-            fontParamFound.fillColor = sf::Color{(sf::Uint32)colorValue};
+            std::string hexString{findFillColor.value().template get<std::string>()};
+            fontParamFound.fillColor = GetColorFromHex(hexString);
         }
         SetFontParameters(fontParamFound);
     }
+
+    const auto& findAttachments{json.find("attachments")};
     if(findAttachments != json.end()) {
-        for(auto attachmentJSON : findAttachments.value()) {
-            const auto& findResource{attachmentJSON.find("resource")};
-            if(findResource != attachmentJSON.end()) {
-                const auto& resourceJSON{findResource.value()};
-                const auto& findID{resourceJSON.find("id")};
-                const auto& findTypeID{resourceJSON.find("typeID")};
-                const auto& findPath{resourceJSON.find("path")};
-                ResourceID id{""};
-                Resource::TypeID type;
-                std::string path{""};
-                if(findID != resourceJSON.end()) {
-                    findID.value().get_to(id);
-                }
-                if(findTypeID != resourceJSON.end()) {
-                    type = (Resource::TypeID)findTypeID.value();
-                }
-                if(findPath != resourceJSON.end()) {
-                    findPath.value().get_to(path);
-                }
-                if(     id.length() > 0
-                    &&  path.length() > 0) {
-                    Resource* resource{nullptr};
-                    if(type == Resource::TypeID::Font) {
-                        resource = resourceMgr.GetFont(id);
-                        if(!resource) {
-                            resource = resourceMgr.LoadFont(id, path);
-                        }
-                    }
-                    if(resource) {
-                        this->Attach(resource);
-                    }
+        const auto& attachmentsJSON{findAttachments.value()};
+        const auto& findFonts{attachmentsJSON.find("fonts")};
+        if(findFonts != attachmentsJSON.end()) {
+            for(auto fontIter : findFonts.value()) {
+                ResourceID  fontID{fontIter.template get<std::string>()};
+                Font*       font{resourceMgr.GetFont(fontID)};
+                if(font) {
+                    this->Attach(font);
                 }
             }
         }
@@ -97,18 +76,14 @@ nlohmann::json Text::SaveToJSON() const {
     };
     const nlohmann::json            fontParamJSON{
         {"fontParameters", {
-            "fontID", fontParam.fontID,
+            "id", fontParam.fontID,
             "fontSize", std::to_string(fontParam.fontSize),
             "outlineColor", std::to_string(fontParam.outlineColor.toInteger()),
             "fillColor", std::to_string(fontParam.fillColor.toInteger())
         } }
     };
     nlohmann::json                  attachmentJSON;
-    const auto& attachmentList{this->GetAttachments()};
-    if(attachmentList.size() > 0) {
-        Resource* resource{*attachmentList.begin()};
-        attachmentJSON = resource->SaveToJSON();
-    }
+    
     const nlohmann::json            output{
         {fontParamJSON},
         {"attachments",
@@ -144,7 +119,13 @@ void Text::SetFontParameters(const Text::FontParameters& param) {
         text.setFont(font->GetFont());
         text.setCharacterSize(fontParam.fontSize);
         text.setOutlineColor(fontParam.outlineColor);
-        text.setFillColor(fontParam.fillColor);
+        if(fontParam.fillColor == sf::Color::White) {
+            text.setFillColor(fontParam.fillColor);
+        }
+        else {
+            text.setFillColor(sf::Color::Red);
+        }
+        
     }
 }
 

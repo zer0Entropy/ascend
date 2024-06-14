@@ -15,6 +15,7 @@ FetchContent_MakeAvailable(json)
 
 add_executable(ascend       src/main.cpp
                             src/core/app.cpp
+                            src/core/common.cpp
                             src/core/event.cpp
                             src/core/input.cpp
                             src/core/inputHandler.cpp

@@ -2,6 +2,10 @@
 
 #include <array>
 #include <string>
+#include <sstream>
+#include <SFML/Graphics/Color.hpp>
+#include <SFML/Graphics/Rect.hpp>   
+#include <SFML/System/Vector2.hpp>
 
 enum class Alignment{
     Left,
@@ -24,3 +28,6 @@ bool IsInBounds(sf::Vector2<T> position, sf::Rect<T> rect) {
     }
     return inBounds;
 }
+
+sf::Color GetColorFromHex(std::string_view hex);
+std::string GetHexFromColor(const sf::Color& color);

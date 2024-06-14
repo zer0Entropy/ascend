@@ -13,38 +13,16 @@ sf::Sprite& Sprite::GetSprite() const {
 
 void Sprite::LoadFromJSON(const nlohmann::json& json) {
     ResourceMgr& resourceMgr{Application::GetInstance().GetResourceMgr()};
-
     const auto& findAttachments{json.find("attachments")};
-    for(auto attachmentJSON : findAttachments.value()) {
-        const auto& findResource{attachmentJSON.find("resource")};
-        if(findResource != attachmentJSON.end()) {
-            const auto& resourceJSON{findResource.value()};
-            const auto& findID{resourceJSON.find("id")};
-            const auto& findTypeID{resourceJSON.find("typeID")};
-            const auto& findPath{resourceJSON.find("path")};
-            ResourceID id{""};
-            Resource::TypeID type;
-            std::string path{""};
-            if(findID != resourceJSON.end()) {
-                findID.value().get_to(id);
-            }
-            if(findTypeID != resourceJSON.end()) {
-                type = (Resource::TypeID)findTypeID.value();
-            }
-            if(findPath != resourceJSON.end()) {
-                findPath.value().get_to(path);
-            }
-            if(     id.length() > 0
-                &&  path.length() > 0) {
-                Resource* resource{nullptr};
-                if(type == Resource::TypeID::Texture) {
-                    resource = resourceMgr.GetTexture(id);
-                    if(!resource) {
-                        resource = resourceMgr.LoadTexture(id, path);
-                    }
-                }
-                if(resource) {
-                    this->Attach(resource);
+    if(findAttachments != json.end()) {
+        const auto& attachmentsJSON{findAttachments.value()};
+        const auto& findTextures{attachmentsJSON.find("textures")};
+        if(findTextures != attachmentsJSON.end()) {
+            for(auto textureIter : findTextures.value()) {
+                ResourceID  textureID{textureIter.template get<std::string>()};
+                Texture*    texture{resourceMgr.GetTexture(textureID)};
+                if(texture) {
+                    this->Attach(texture);
                 }
             }
         }
@@ -52,17 +30,7 @@ void Sprite::LoadFromJSON(const nlohmann::json& json) {
 }
 
 nlohmann::json Sprite::SaveToJSON() const {
-    nlohmann::json attachmentJSON;
-    const auto& attachmentList{this->GetAttachments()};
-    if(attachmentList.size() > 0) {
-        Resource* resource{*attachmentList.begin()};
-        attachmentJSON = resource->SaveToJSON();
-    }
-    const nlohmann::json output{
-            {"attachments", {
-                attachmentJSON
-            } }
-    };
+    nlohmann::json output;
     return output;
 }
 
