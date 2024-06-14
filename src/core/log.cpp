@@ -28,10 +28,21 @@ void LogSystem::Detatch(const ResourceID& resourceID) {
 void LogSystem::Update() {
     if(log) {
         for(const auto& publisher : publishers) {
-            auto queue{publisher->GetMsgQueue()};
+            auto                        queue{publisher->GetMsgQueue()};
             publisher->ClearMsgQueue();
             while(!queue.empty()) {
-                log->Append(queue.front());
+                const auto&             message{queue.front()};
+                MsgPriorityID           msgPriority{message.first};
+                const std::string&      msgContents{message.second};
+                const std::string&      priorityString{MsgPriorityNames.at((int)msgPriority)};
+                std::string             prioritySpacing{"\t"};
+                if(priorityString.length() <= 4) {
+                    prioritySpacing.append("\t");
+                }
+                std::string             logMessage{
+                    "[" + priorityString + "]" + prioritySpacing + msgContents
+                };
+                log->Append(logMessage);
                 queue.pop();
             }
         }

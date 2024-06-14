@@ -102,6 +102,7 @@ void Application::Stop() {
     for(int index = 0; index < NumSystems; ++index) {
         systemList[index] = nullptr;
     }
+    eventSystem.reset(nullptr);
     renderSystem.reset(nullptr);
     inputSystem.reset(nullptr);
     logSystem.reset(nullptr);
