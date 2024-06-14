@@ -8,9 +8,10 @@ public:
     enum class SystemID {
         LogSystem,
         InputSystem,
-        RenderSystem
+        RenderSystem,
+        EventSystem
     };
     virtual SystemID    GetSystemID() const = 0;
 };
 
-constexpr int NumSystems{3};
+constexpr int NumSystems{4};

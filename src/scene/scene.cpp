@@ -120,6 +120,14 @@ BoundingBoxMgr& Scene::GetBoundingBoxMgr() const {
     return const_cast<BoundingBoxMgr&>(boundingBoxMgr);
 }
 
+HoverableMgr& Scene::GetHoverableMgr() const {
+    return const_cast<HoverableMgr&>(hoverableMgr);
+}
+
+TextureSwitcherMgr& Scene::GetTextureSwitcherMgr() const {
+    return const_cast<TextureSwitcherMgr&>(textureSwitcherMgr);
+}
+
 const std::vector<Entity>& Scene::GetEntityList() const {
     return entityList;
 }

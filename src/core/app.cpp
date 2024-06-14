@@ -22,6 +22,10 @@ RenderSystem* Application::GetRenderSystem() const {
     return renderSystem.get();
 }
 
+EventSystem* Application::GetEventSystem() const {
+    return eventSystem.get();
+}
+
 sf::RenderWindow& Application::GetWindow() const {
     return const_cast<sf::RenderWindow&>(window);
 }
@@ -68,9 +72,11 @@ void Application::Start() {
     logSystem = std::make_unique<LogSystem>();
     inputSystem = std::make_unique<InputSystem>(window);
     renderSystem = std::make_unique<RenderSystem>(window);
+    eventSystem = std::make_unique<EventSystem>();
     systemList[(int)ISystem::SystemID::LogSystem] = logSystem.get();
     systemList[(int)ISystem::SystemID::InputSystem] = inputSystem.get();
     systemList[(int)ISystem::SystemID::RenderSystem] = renderSystem.get();
+    systemList[(int)ISystem::SystemID::EventSystem] = eventSystem.get();
 
     inputSystem->Subscribe(&inputHandler);
     

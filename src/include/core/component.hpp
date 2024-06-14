@@ -11,7 +11,9 @@ public:
         Text,
         Renderable,
         Label,
-        AlignLabel
+        AlignLabel,
+        Hoverable,
+        TextureSwitcher
     };
 
     Component(TypeID cType, Entity cOwner):

@@ -1,6 +1,6 @@
 #include "../include/component/label.hpp"
 
-Label::Label(Entity cEntity, BoundingBox& boundsCmp, Text& textCmp):
+Label::Label(Entity cEntity, const BoundingBox& boundsCmp, Text& textCmp):
     Component{Component::TypeID::Label, cEntity},
     bounds{boundsCmp},
     text{textCmp} {
@@ -23,7 +23,7 @@ Text& Label::GetText() const {
     return const_cast<Text&>(text);
 }
 
-void LabelMgr::Add(Entity owner, BoundingBox& boundsCmp, Text& textCmp) {
+void LabelMgr::Add(Entity owner, const BoundingBox& boundsCmp, Text& textCmp) {
     labelMap.insert(std::make_pair(owner, std::make_unique<Label>(owner, boundsCmp, textCmp)));
 }
 

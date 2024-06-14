@@ -24,4 +24,29 @@ void SceneMgr::Push(std::unique_ptr<Scene> scene) {
     sceneFile >> sceneJSON;
     Scene*                      currentScene{GetCurrentScene()};
     currentScene->LoadFromJSON(sceneJSON);
+
+    HoverableMgr&               hoverableMgr{currentScene->GetHoverableMgr()};
+    TextureSwitcherMgr&         textureSwitcherMgr{currentScene->GetTextureSwitcherMgr()};
+    InputSystem&                inputSystem{*Application::GetInstance().GetInputSystem()};
+    EventSystem&                eventSystem{*Application::GetInstance().GetEventSystem()};
+    ResourceMgr&                resourceMgr{Application::GetInstance().GetResourceMgr()};
+    ResourceID                  normalTextureID{"ButtonTexture"};
+    ResourceID                  hoverTextureID{"ButtonTextureHover"};
+    std::string                 hoverTexturePath{"/home/zeroc00l/Code/ascend/data/img/uiTextures/Orange/Btn_over.png"};
+    resourceMgr.LoadTexture(hoverTextureID, hoverTexturePath);
+    Texture*                    normalTexture{resourceMgr.GetTexture(normalTextureID)};
+    Texture*                    hoverTexture{resourceMgr.GetTexture(hoverTextureID)};
+    for(const auto entity : currentScene->GetEntityList()) {
+        hoverableMgr.Add(entity, *currentScene->GetBoundingBoxMgr().Get(entity));
+        textureSwitcherMgr.Add(entity, *currentScene->GetSpriteMgr().Get(entity));
+        auto hoverable{hoverableMgr.Get(entity)};
+        auto textureSwitcher(textureSwitcherMgr.Get(entity));
+        inputSystem.Subscribe(hoverable);
+        textureSwitcher->AddTrigger(Event::TypeID::CursorHoveringStarted, hoverTextureID);
+        textureSwitcher->AddTrigger(Event::TypeID::CursorHoveringStopped, normalTextureID);
+        textureSwitcher->Attach(normalTexture);
+        textureSwitcher->Attach(hoverTexture);
+        eventSystem.Subscribe(textureSwitcher, Event::TypeID::CursorHoveringStarted);
+        eventSystem.Subscribe(textureSwitcher, Event::TypeID::CursorHoveringStopped);
+    }
 }

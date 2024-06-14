@@ -4,6 +4,7 @@
 #include <memory>
 #include <SFML/Graphics/RenderWindow.hpp>
 #include "entity.hpp"
+#include "event.hpp"
 #include "input.hpp"
 #include "log.hpp"
 #include "render.hpp"
@@ -34,7 +35,8 @@ public:
     LogSystem*                              GetLogSystem() const;
     InputSystem*                            GetInputSystem() const;
     RenderSystem*                           GetRenderSystem() const;
-    
+    EventSystem*                            GetEventSystem() const;
+
     sf::RenderWindow&                       GetWindow() const;
 
     enum class StatusID {
@@ -64,6 +66,7 @@ private:
     std::unique_ptr<LogSystem>              logSystem;
     std::unique_ptr<InputSystem>            inputSystem;
     std::unique_ptr<RenderSystem>           renderSystem;
+    std::unique_ptr<EventSystem>            eventSystem;
 
     sf::RenderWindow                        window;
 };

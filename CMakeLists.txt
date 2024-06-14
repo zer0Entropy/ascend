@@ -15,6 +15,7 @@ FetchContent_MakeAvailable(json)
 
 add_executable(ascend       src/main.cpp
                             src/core/app.cpp
+                            src/core/event.cpp
                             src/core/input.cpp
                             src/core/inputHandler.cpp
                             src/core/log.cpp
@@ -25,6 +26,8 @@ add_executable(ascend       src/main.cpp
                             src/component/renderable.cpp
                             src/component/sprite.cpp
                             src/component/text.cpp
+                            src/component/hoverable.cpp
+                            src/component/textureSwitcher.cpp
                             src/resource/resource.cpp
                             src/resource/textFile.cpp
                             src/resource/texture.cpp
