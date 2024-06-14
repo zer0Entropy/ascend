@@ -5,7 +5,7 @@
 
 class TextFile: public Resource {
 public:
-    TextFile(const ResourceID& resourceID, std::string_view resourcePath);
+    TextFile(const ResourceID& resourceID, std::string_view resourcePath, bool overwrite = false);
     
     void                                Reload();
     void                                WriteToFilesystem();

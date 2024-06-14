@@ -11,9 +11,12 @@ class Event: public ISerializeable {
 public:
     enum class TypeID {
         CursorHoveringStarted,
-        CursorHoveringStopped
+        CursorHoveringStopped,
+        ButtonPressStarted,
+        ButtonPressStopped,
+        ButtonReleased
     };
-    constexpr static int NumEventTypes = 2;
+    constexpr static int NumEventTypes = 5;
 
     Event(TypeID type, Entity targetEnt);
 
@@ -32,8 +35,9 @@ class EventSystem: public ISystem {
 public:
     EventSystem();
 
-    void                                Update();
-    ISystem::SystemID                   GetSystemID() const;
+    void                                Update() override;
+    ISystem::SystemID                   GetSystemID() const override;
+    
     void                                Enqueue(const Event& event);
     void                                Subscribe(IEventSubscriber* subscriber, Event::TypeID eventType);
     void                                Unsubscribe(IEventSubscriber* subscriber, Event::TypeID eventType);

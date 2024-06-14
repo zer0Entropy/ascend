@@ -3,29 +3,35 @@
 
 LogSystem::LogSystem():
     ISystem{},
-    ICanHaveAttachments{} {
+    ICanHaveAttachments{},
+    log{nullptr} {
 
 }
 
-void LogSystem::Update() {
-    TextFile* textFile{nullptr};
-    const auto& attachmentList{this->GetAttachments()};
-    if(attachmentList.empty()) {
-        return;
-    }
-    else {
-        Resource* attachedResource{*attachmentList.begin()};
-        if(attachedResource->GetTypeID() == Resource::TypeID::TextFile) {
-            textFile = dynamic_cast<TextFile*>(attachedResource);
+void LogSystem::Attach(Resource* resource) {
+    if(GetAttachments().size() == 0)
+    {
+        if(resource->GetTypeID() == Resource::TypeID::TextFile) {
+            log = dynamic_cast<TextFile*>(resource);
+            ICanHaveAttachments::Attach(log);
         }
     }
-    
-    if(textFile) {
+}
+
+void LogSystem::Detatch(const ResourceID& resourceID) {
+    if(log && resourceID == log->GetID()) {
+        ICanHaveAttachments::Detatch(resourceID);
+        log = nullptr;
+    }   
+}
+
+void LogSystem::Update() {
+    if(log) {
         for(const auto& publisher : publishers) {
             auto queue{publisher->GetMsgQueue()};
             publisher->ClearMsgQueue();
             while(!queue.empty()) {
-                textFile->Append(queue.front());
+                log->Append(queue.front());
                 queue.pop();
             }
         }

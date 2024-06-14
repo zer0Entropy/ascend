@@ -78,6 +78,14 @@ void Application::Start() {
     systemList[(int)ISystem::SystemID::RenderSystem] = renderSystem.get();
     systemList[(int)ISystem::SystemID::EventSystem] = eventSystem.get();
 
+    ResourceID                  logFileID{"LogTextFile"};
+    std::string                 logPath{"/home/zeroc00l/Code/ascend/data/log.txt"};
+    resourceMgr.LoadTextFile(logFileID, logPath, true);
+    TextFile*                   log{resourceMgr.GetTextFile(logFileID)};
+    logSystem->Attach(log);
+
+    logSystem->Subscribe(&resourceMgr);
+
     inputSystem->Subscribe(&inputHandler);
     
     sf::Vector2u                windowSize{1920, 1080};

@@ -9,8 +9,8 @@ class InputSystem: public ISystem {
 public:
     InputSystem(sf::Window& win);
 
-    void                                Update();
-    ISystem::SystemID                   GetSystemID() const;
+    void                                Update() override;
+    ISystem::SystemID                   GetSystemID() const override;
 
     void                                Subscribe(IInputListener* listener);
     void                                Unsubscribe(IInputListener* listener);

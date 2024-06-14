@@ -2,18 +2,20 @@
 #include <fstream>
 #include "../include/resource/textFile.hpp"
 
-TextFile::TextFile(const ResourceID& resourceID, std::string_view resourcePath):
+TextFile::TextFile(const ResourceID& resourceID, std::string_view resourcePath, bool overwrite):
     Resource{resourceID, Resource::TypeID::TextFile, resourcePath} {
-    // If a file already exists at the specified path, load it
-    if(std::filesystem::exists(std::filesystem::path{resourcePath})) {
-        Reload();
-    }
-    // Otherwise, create an empty file with that filename
-    else {
+    std::filesystem::path path{resourcePath};
+    // If the file doesn't exist, or if we're told to overwrite it,
+    // then don't worry about loading the existing document.
+    if(     !std::filesystem::exists(path)
+        ||  overwrite) {
         std::ofstream output{this->GetPath(), std::ios_base::out};
         if(output.is_open()) {
             output.close();
         }
+    }
+    else {
+        Reload();
     }
 }
 

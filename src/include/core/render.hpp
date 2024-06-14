@@ -10,8 +10,8 @@ class RenderSystem: public ISystem {
 public:
     RenderSystem(sf::RenderWindow& win);
 
-    void                                        Update();
-    ISystem::SystemID                           GetSystemID() const;
+    void                                        Update() override;
+    ISystem::SystemID                           GetSystemID() const override;
 
     RenderableMgr&                              GetRenderableMgr() const;
     LabelMgr&                                   GetLabelMgr() const;

@@ -13,7 +13,7 @@ public:
         }
     }
 
-    virtual void                                    WriteLogMsg(std::string_view message) {
+    virtual void                                    PublishMsg(std::string_view message) {
         msgQueue.push(std::string{message});
     }
 

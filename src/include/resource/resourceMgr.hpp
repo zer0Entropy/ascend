@@ -5,14 +5,15 @@
 #include "font.hpp"
 #include "textFile.hpp"
 #include "texture.hpp"
+#include "../interface/publisher.hpp"
 
-class ResourceMgr {
+class ResourceMgr: public ILogMsgPublisher {
 public:
     Font*               LoadFont(const ResourceID& resourceID, std::string_view resourcePath);
     void                UnloadFont(const ResourceID& resourceID);
     Font*               GetFont(const ResourceID& resourceID);
 
-    TextFile*           LoadTextFile(const ResourceID& resourceID, std::string_view resourcePath);
+    TextFile*           LoadTextFile(const ResourceID& resourceID, std::string_view resourcePath, bool overwrite = false);
     void                UnloadTextFile(const ResourceID& resourceID);
     TextFile*           GetTextFile(const ResourceID& resourceID);
 
