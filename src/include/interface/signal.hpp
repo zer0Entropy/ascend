@@ -2,7 +2,8 @@
 
 enum class SignalID {
     FatalError,
-    WindowClosed
+    WindowClosed,
+    UserQuitGame
 };
 
 class Application;

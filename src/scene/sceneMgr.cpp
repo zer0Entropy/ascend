@@ -2,6 +2,12 @@
 #include "../include/scene/sceneMgr.hpp"
 #include "../include/core/app.hpp"
 
+void SceneMgr::HandleEvent(const Event& event) {
+    if(event.GetTypeID() == Event::TypeID::QuitGameStarted) {
+        this->ThrowSignal(SignalID::UserQuitGame);
+    }
+}
+
 Scene* SceneMgr::GetCurrentScene() const {
     if(stack.empty()) {
         return nullptr;

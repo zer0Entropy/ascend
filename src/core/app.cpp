@@ -57,7 +57,8 @@ void Application::Update() {
 
 void Application::ReceiveSignal(SignalID signal) {
     if(     signal == SignalID::FatalError
-        ||  signal == SignalID::WindowClosed) {
+        ||  signal == SignalID::WindowClosed
+        ||  signal == SignalID::UserQuitGame) {
         Stop();
     }
 }
@@ -79,6 +80,10 @@ void Application::Start() {
     systemList[(int)ISystem::SystemID::EventSystem] = eventSystem.get();
 
     logSystem->Subscribe(inputSystem.get());
+    eventSystem->Subscribe(&sceneMgr, Event::TypeID::NewGameStarted);
+    eventSystem->Subscribe(&sceneMgr, Event::TypeID::LoadGameStarted);
+    eventSystem->Subscribe(&sceneMgr, Event::TypeID::OptionsStarted);
+    eventSystem->Subscribe(&sceneMgr, Event::TypeID::QuitGameStarted);
 
     ResourceID                  logFileID{"LogTextFile"};
     std::string                 logPath{"/home/zeroc00l/Code/ascend/data/log.txt"};

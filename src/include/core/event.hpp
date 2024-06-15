@@ -17,16 +17,24 @@ public:
         CursorHoveringStopped,
         ButtonPressStarted,
         ButtonPressCompleted,
-        ButtonPressAborted
+        ButtonPressAborted,
+        NewGameStarted,
+        LoadGameStarted,
+        OptionsStarted,
+        QuitGameStarted
     };
-    constexpr static int NumEventTypes = 5;
+    constexpr static int NumEventTypes = 9;
 
     static constexpr std::array<std::string_view, NumEventTypes> TypeNames{
         "CursorHoveringStarted"sv,
         "CursorHoveringStopped"sv,
         "ButtonPressStarted"sv,
         "ButtonPressCompleted"sv,
-        "ButtonPressAborted"sv
+        "ButtonPressAborted"sv,
+        "NewGameStarted"sv,
+        "LoadGameStarted"sv,
+        "OptionsStarted"sv,
+        "QuitGameStarted"sv
     };
 
     Event(TypeID type, Entity targetEnt);

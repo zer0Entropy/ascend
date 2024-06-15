@@ -174,18 +174,19 @@ void Scene::SetSelectedMenuOption(int index) {
 }
 
 void Scene::ConfirmSelectedMenuOption() {
+    auto& eventSystem{*Application::GetInstance().GetEventSystem()};
     MenuOption& selection{*menu.selectedOption};
     if(selection.name.compare("New Game") == 0) {
-
+        eventSystem.Enqueue(Event{Event::TypeID::NewGameStarted, selection.widget});
     }
     else if(selection.name.compare("Load Game") == 0) {
-
+        eventSystem.Enqueue(Event{Event::TypeID::LoadGameStarted, selection.widget});
     }
     else if(selection.name.compare("Options") == 0) {
-
+        eventSystem.Enqueue(Event{Event::TypeID::OptionsStarted, selection.widget});
     }
     else if(selection.name.compare("Quit Game") == 0) {
-
+        eventSystem.Enqueue(Event{Event::TypeID::QuitGameStarted, selection.widget});
     }
 }
 
