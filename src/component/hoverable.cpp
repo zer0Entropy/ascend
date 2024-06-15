@@ -37,6 +37,9 @@ bool Hoverable::ReceiveInput(const sf::Event& event) {
             }
         }
     }
+    else if(event.type == sf::Event::MouseButtonReleased) {
+        status = HoverStatus::Off;
+    }
     return handled;
 }
 
