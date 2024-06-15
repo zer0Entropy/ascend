@@ -5,8 +5,13 @@ Scene::Scene(EntityMgr& entMgr, ResourceMgr& resMgr):
     ISerializeable{},
     ILogMsgPublisher{},
     entityMgr{entMgr},
-    resourceMgr{resMgr} {
+    resourceMgr{resMgr},
+    optionSelector{this} {
 
+    auto& eventSystem{*Application::GetInstance().GetEventSystem()};
+    for(int index = 0; index < Event::NumEventTypes; ++index) {
+        eventSystem.Subscribe(&optionSelector, (Event::TypeID)index);
+    }
 }
 
 void Scene::LoadFromJSON(const nlohmann::json& json) {
@@ -73,6 +78,10 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
             hoverableMgr.Add(entity, *bounds);
             auto hoverable{hoverableMgr.Get(entity)};
             inputSystem.Subscribe(hoverable);
+
+            leftClickableMgr.Add(entity, *bounds);
+            auto leftClickable{leftClickableMgr.Get(entity)};
+            inputSystem.Subscribe(leftClickable);
         }
         if(sprite) {
             textureSwitcherMgr.Add(entity, *sprite);
@@ -147,8 +156,37 @@ TextureSwitcherMgr& Scene::GetTextureSwitcherMgr() const {
     return const_cast<TextureSwitcherMgr&>(textureSwitcherMgr);
 }
 
+LeftClickableMgr& Scene::GetLeftClickableMgr() const {
+    return const_cast<LeftClickableMgr&>(leftClickableMgr);
+}
+
 const Menu& Scene::GetMenu() const {
     return menu;
+}
+
+void Scene::SetSelectedMenuOption(int index) {
+    if(index < 0) {
+        menu.selectedOption = nullptr;
+    }
+    else if(index < menu.options.size()) {
+        menu.selectedOption = &menu.options.at(index);
+    }
+}
+
+void Scene::ConfirmSelectedMenuOption() {
+    MenuOption& selection{*menu.selectedOption};
+    if(selection.name.compare("New Game") == 0) {
+
+    }
+    else if(selection.name.compare("Load Game") == 0) {
+
+    }
+    else if(selection.name.compare("Options") == 0) {
+
+    }
+    else if(selection.name.compare("Quit Game") == 0) {
+
+    }
 }
 
 const std::vector<ResourceToken>& Scene::GetFontList() const {
@@ -256,8 +294,11 @@ void Scene::LoadTextureSwitches(const nlohmann::json& json) {
                     else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressStarted)) == 0) {
                         triggerEvent = Event::TypeID::ButtonPressStarted;
                     }
-                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStopped)) == 0) {
-                        triggerEvent = Event::TypeID::ButtonPressStopped;
+                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressCompleted)) == 0) {
+                        triggerEvent = Event::TypeID::ButtonPressCompleted;
+                    }
+                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressAborted)) == 0) {
+                        triggerEvent = Event::TypeID::ButtonPressAborted;
                     }
                     else {
                         continue;

@@ -78,6 +78,8 @@ void Application::Start() {
     systemList[(int)ISystem::SystemID::RenderSystem] = renderSystem.get();
     systemList[(int)ISystem::SystemID::EventSystem] = eventSystem.get();
 
+    logSystem->Subscribe(inputSystem.get());
+
     ResourceID                  logFileID{"LogTextFile"};
     std::string                 logPath{"/home/zeroc00l/Code/ascend/data/log.txt"};
     resourceMgr.LoadTextFile(logFileID, logPath, true);

@@ -13,7 +13,8 @@ public:
         Label,
         AlignLabel,
         Hoverable,
-        TextureSwitcher
+        TextureSwitcher,
+        LeftClickable
     };
 
     Component(TypeID cType, Entity cOwner):

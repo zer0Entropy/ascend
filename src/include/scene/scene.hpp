@@ -1,11 +1,13 @@
 #pragma once
 
 #include "menu.hpp"
+#include "optionSelector.hpp"
 #include "../component/boundingBox.hpp"
 #include "../component/sprite.hpp"
 #include "../component/text.hpp"
 #include "../component/hoverable.hpp"
 #include "../component/textureSwitcher.hpp"
+#include "../component/leftClickable.hpp"
 #include "../interface/serialize.hpp"
 #include "../interface/publisher.hpp"
 #include "../resource/resourceMgr.hpp"
@@ -27,8 +29,11 @@ public:
     BoundingBoxMgr&                         GetBoundingBoxMgr() const;
     HoverableMgr&                           GetHoverableMgr() const;
     TextureSwitcherMgr&                     GetTextureSwitcherMgr() const;
+    LeftClickableMgr&                       GetLeftClickableMgr() const;
 
     const Menu&                             GetMenu() const;
+    void                                    SetSelectedMenuOption(int index);
+    void                                    ConfirmSelectedMenuOption();
 
     const std::vector<ResourceToken>&       GetFontList() const;
     const std::vector<ResourceToken>&       GetTextureList() const;
@@ -46,6 +51,7 @@ private:
     BoundingBoxMgr                          boundingBoxMgr;
     HoverableMgr                            hoverableMgr;
     TextureSwitcherMgr                      textureSwitcherMgr;
+    LeftClickableMgr                        leftClickableMgr;
     
     EntityMgr&                              entityMgr;
     ResourceMgr&                            resourceMgr;
@@ -54,4 +60,5 @@ private:
     std::vector<ResourceToken>              textureList;
 
     Menu                                    menu;
+    MenuOptionSelector                      optionSelector;
 };

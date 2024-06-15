@@ -29,6 +29,7 @@ add_executable(ascend       src/main.cpp
                             src/component/text.cpp
                             src/component/hoverable.cpp
                             src/component/textureSwitcher.cpp
+                            src/component/leftClickable.cpp
                             src/resource/resource.cpp
                             src/resource/textFile.cpp
                             src/resource/texture.cpp
@@ -36,6 +37,7 @@ add_executable(ascend       src/main.cpp
                             src/resource/resourceMgr.cpp
                             src/scene/scene.cpp
                             src/scene/sceneMgr.cpp
+                            src/scene/optionSelector.cpp
                             src/interface/signal.cpp)
 
 #target_compile_options(ascend PRIVATE -fstandalone-debug)

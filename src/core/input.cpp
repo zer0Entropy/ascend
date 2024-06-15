@@ -2,6 +2,7 @@
 
 InputSystem::InputSystem(sf::Window& win):
     ISystem{},
+    ILogMsgPublisher{},
     window{win} {
 
 }
@@ -9,10 +10,21 @@ InputSystem::InputSystem(sf::Window& win):
 void InputSystem::Update() {
     sf::Event event;
     while(window.pollEvent(event)) {
-        if(     event.type == sf::Event::Closed
-            ||  event.type == sf::Event::MouseMoved
-            ||  event.type == sf::Event::MouseButtonPressed
-            ||  event.type == sf::Event::MouseButtonReleased) {
+        std::string eventMsg{""};
+        if(event.type == sf::Event::Closed) {
+            eventMsg = "Input event received: WindowClosed.";
+        }
+        else if(event.type == sf::Event::MouseButtonPressed) {
+            eventMsg = "Input event received: MouseButtonPressed.";
+        }
+        else if(event.type == sf::Event::MouseButtonReleased) {
+            eventMsg = "Input event received: MouseButtonReleased.";
+        }
+        if(     event.type == sf::Event::MouseMoved
+            ||  eventMsg.length() > 0) {
+            if(eventMsg.length() > 0) {
+                PublishMsg(eventMsg);
+            }
             for(auto listener : listeners) {
                 bool done{listener->ReceiveInput(event)};
                 if(done) {

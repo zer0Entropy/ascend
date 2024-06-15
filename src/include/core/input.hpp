@@ -3,9 +3,10 @@
 #include <vector>
 #include <SFML/Window.hpp>
 #include "../interface/listener.hpp"
+#include "../interface/publisher.hpp"
 #include "../interface/system.hpp"
 
-class InputSystem: public ISystem {
+class InputSystem: public ISystem, public ILogMsgPublisher {
 public:
     InputSystem(sf::Window& win);
 
