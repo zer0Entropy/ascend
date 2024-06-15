@@ -7,6 +7,17 @@ class ICanHaveAttachments {
 public:
     virtual ~ICanHaveAttachments() = default;
 
+    virtual bool                            Contains(const ResourceID& resourceID) const {
+        bool resourceFound{false};
+        for(auto attachedResource : attachments) {
+            if(resourceID.compare(attachedResource->GetID()) == 0) {
+                resourceFound = true;
+                break;
+            }
+        }
+        return resourceFound;
+    }
+
     virtual void                            Attach(Resource* resource) {attachments.push_back(resource);}
     
     virtual void                            Detatch(const ResourceID& resourceID) {

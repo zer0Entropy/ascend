@@ -48,6 +48,7 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
         }
     }
 
+    auto& inputSystem{*Application::GetInstance().GetInputSystem()};
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     auto& labelMgr{Application::GetInstance().GetRenderSystem()->GetLabelMgr()};
     for(const auto& entity : entityList) {
@@ -60,6 +61,14 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
         if(bounds && text) {
             labelMgr.Add(entity, *bounds, *text);
         }
+        if(bounds) {
+            hoverableMgr.Add(entity, *bounds);
+            auto hoverable{hoverableMgr.Get(entity)};
+            inputSystem.Subscribe(hoverable);
+        }
+        if(sprite) {
+            textureSwitcherMgr.Add(entity, *sprite);
+        }
     }
 
     auto& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignLabelMgr()};
@@ -67,10 +76,58 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
     if(findAlignLabels != json.end()) {
         int index = 0;
         for(auto alignLabelJSON : findAlignLabels.value()) {
-            Entity      owner{entityList.at(index++)};
-            Alignment   alignment{LoadAlignLabel(alignLabelJSON)};
-            Label*      label{labelMgr.Get(owner)};
+            Entity              owner{entityList.at(index++)};
+            Alignment           alignment{LoadAlignLabel(alignLabelJSON)};
+            Label*              label{labelMgr.Get(owner)};
             alignLabelMgr.Add(owner, alignment, *label);
+        }
+    }
+
+    auto& eventSystem{*Application::GetInstance().GetEventSystem()};
+    const auto& findTextureSwitches{json.find("textureSwitches")};
+    if(findTextureSwitches != json.end()) {
+        for(const auto& owner : entityList) {
+            auto                        sprite{spriteMgr.Get(owner)};
+            if(sprite) {
+                textureSwitcherMgr.Add(owner, *sprite);
+                auto&                   textureSwitcher{*textureSwitcherMgr.Get(owner)};
+                for(auto textureSwitchJSON : findTextureSwitches.value()) {
+                    const auto&         findTriggerEvent{textureSwitchJSON.find("triggerEvent")};
+                    const auto&         findTextureID{textureSwitchJSON.find("textureID")};
+                    Event::TypeID       triggerEvent;
+                    ResourceID          textureID;
+                    if(findTriggerEvent != textureSwitchJSON.end()) {
+                        std::string     eventName{findTriggerEvent.value().template get<std::string>()};
+                        if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStarted)) == 0) {
+                            triggerEvent = Event::TypeID::CursorHoveringStarted;
+                        }
+                        else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStopped)) == 0) {
+                            triggerEvent = Event::TypeID::CursorHoveringStopped;
+                        }
+                        else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressStarted)) == 0) {
+                            triggerEvent = Event::TypeID::ButtonPressStarted;
+                        }
+                        else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStopped)) == 0) {
+                            triggerEvent = Event::TypeID::ButtonPressStopped;
+                        }
+                        else {
+                            continue;
+                        }
+                    }
+                    if(findTextureID != textureSwitchJSON.end()) {
+                        findTextureID.value().get_to(textureID);
+                        if(!textureSwitcher.Contains(textureID)) {
+                            Texture*        texture{resourceMgr.GetTexture(textureID)};
+                            textureSwitcher.Attach(texture);
+                        }
+                    }
+                    if(     findTriggerEvent != textureSwitchJSON.end()
+                        &&  findTextureID != textureSwitchJSON.end()) {
+                        textureSwitcher.AddTrigger(triggerEvent, textureID);
+                        eventSystem.Subscribe(&textureSwitcher, triggerEvent);
+                    }
+                }
+            }
         }
     }
 }
