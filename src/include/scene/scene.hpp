@@ -27,8 +27,9 @@ public:
     BoundingBoxMgr&                         GetBoundingBoxMgr() const;
     HoverableMgr&                           GetHoverableMgr() const;
     TextureSwitcherMgr&                     GetTextureSwitcherMgr() const;
-    
-    const std::vector<Entity>&              GetEntityList() const;
+
+    const Menu&                             GetMenu() const;
+
     const std::vector<ResourceToken>&       GetFontList() const;
     const std::vector<ResourceToken>&       GetTextureList() const;
 
@@ -49,7 +50,6 @@ private:
     EntityMgr&                              entityMgr;
     ResourceMgr&                            resourceMgr;
 
-    std::vector<Entity>                     entityList;
     std::vector<ResourceToken>              fontList;
     std::vector<ResourceToken>              textureList;
 

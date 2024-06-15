@@ -10,11 +10,18 @@ Scene::Scene(EntityMgr& entMgr, ResourceMgr& resMgr):
 }
 
 void Scene::LoadFromJSON(const nlohmann::json& json) {
-    const auto& findEntities{json.find("entities")};
-    if(findEntities != json.end()) {
-        int numEntities{findEntities.value()};
-        for(int index = 0; index < numEntities; ++index) {
-            entityList.push_back(entityMgr.CreateEntity());
+    const auto& findMenu{json.find("menu")};
+    if(findMenu != json.end()) {
+        const auto& menuJSON{findMenu.value()};
+        const auto& findOptions{menuJSON.find("options")};
+        if(findOptions != menuJSON.end()) {
+            const auto& optionsVec{findOptions.value()};
+            for(auto optionJSON : optionsVec) {
+                MenuOption option;
+                optionJSON.get_to(option.name);
+                option.widget = entityMgr.CreateEntity();
+                menu.options.push_back(option);
+            }
         }
     }
 
@@ -28,7 +35,7 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
     if(findSprites != json.end()) {
         int index = 0;
         for(auto spriteJSON : findSprites.value()) {
-            LoadSprite(entityList.at(index++), spriteJSON);
+            LoadSprite(menu.options.at(index++).widget, spriteJSON);
         }
     }
 
@@ -36,7 +43,7 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
     if(findTexts != json.end()) {
         int index = 0;
         for(auto textJSON : findTexts.value()) {
-            LoadText(entityList.at(index++), textJSON);
+            LoadText(menu.options.at(index++).widget, textJSON);
         }
     }
     
@@ -44,14 +51,15 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
     if(findBounds != json.end()) {
         int index = 0;
         for(auto boundsJSON : findBounds.value()) {
-            LoadBoundingBox(entityList.at(index++), boundsJSON);
+            LoadBoundingBox(menu.options.at(index++).widget, boundsJSON);
         }
     }
 
     auto& inputSystem{*Application::GetInstance().GetInputSystem()};
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     auto& labelMgr{Application::GetInstance().GetRenderSystem()->GetLabelMgr()};
-    for(const auto& entity : entityList) {
+    for(int index = 0; index < menu.options.size(); ++index) {
+        Entity  entity{menu.options.at(index).widget};
         auto    bounds{boundingBoxMgr.Get(entity)};
         auto    sprite{spriteMgr.Get(entity)};
         auto    text{textMgr.Get(entity)};
@@ -76,7 +84,7 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
     if(findAlignLabels != json.end()) {
         int index = 0;
         for(auto alignLabelJSON : findAlignLabels.value()) {
-            Entity              owner{entityList.at(index++)};
+            Entity              owner{menu.options.at(index++).widget};
             Alignment           alignment{LoadAlignLabel(alignLabelJSON)};
             Label*              label{labelMgr.Get(owner)};
             alignLabelMgr.Add(owner, alignment, *label);
@@ -139,8 +147,8 @@ TextureSwitcherMgr& Scene::GetTextureSwitcherMgr() const {
     return const_cast<TextureSwitcherMgr&>(textureSwitcherMgr);
 }
 
-const std::vector<Entity>& Scene::GetEntityList() const {
-    return entityList;
+const Menu& Scene::GetMenu() const {
+    return menu;
 }
 
 const std::vector<ResourceToken>& Scene::GetFontList() const {
@@ -226,7 +234,8 @@ Alignment Scene::LoadAlignLabel(const nlohmann::json& json) const {
 
 void Scene::LoadTextureSwitches(const nlohmann::json& json) {
     auto& eventSystem{*Application::GetInstance().GetEventSystem()};
-    for(const auto& owner : entityList) {
+    for(int index = 0; index < menu.options.size(); ++index) {
+        Entity                              owner{menu.options.at(index).widget};
         auto                                sprite{spriteMgr.Get(owner)};
         if(sprite) {
             textureSwitcherMgr.Add(owner, *sprite);
