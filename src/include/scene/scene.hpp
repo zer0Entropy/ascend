@@ -1,5 +1,6 @@
 #pragma once
 
+#include "menu.hpp"
 #include "../component/boundingBox.hpp"
 #include "../component/sprite.hpp"
 #include "../component/text.hpp"
@@ -37,6 +38,7 @@ private:
     void                                    LoadText(Entity owner, const nlohmann::json& json);
     void                                    LoadBoundingBox(Entity owner, const nlohmann::json& json);
     Alignment                               LoadAlignLabel(const nlohmann::json& json) const;
+    void                                    LoadTextureSwitches(const nlohmann::json& json);
 
     SpriteMgr                               spriteMgr;
     TextMgr                                 textMgr;
@@ -50,4 +52,6 @@ private:
     std::vector<Entity>                     entityList;
     std::vector<ResourceToken>              fontList;
     std::vector<ResourceToken>              textureList;
+
+    Menu                                    menu;
 };
