@@ -15,125 +15,34 @@ Scene::Scene(EntityMgr& entMgr, ResourceMgr& resMgr):
 }
 
 void Scene::LoadFromJSON(const nlohmann::json& json) {
-    const auto& findMenu{json.find("menu")};
-    if(findMenu != json.end()) {
-        const auto& menuJSON{findMenu.value()};
-        const auto& findOptions{menuJSON.find("options")};
-        if(findOptions != menuJSON.end()) {
-            const auto& optionsVec{findOptions.value()};
-            for(auto optionJSON : optionsVec) {
-                MenuOption option;
-                optionJSON.get_to(option.name);
-                option.widget = entityMgr.CreateEntity();
-                menu.options.push_back(option);
-            }
-        }
-    }
-
-    const auto& findResources{json.find("resources")};
-    if(findResources != json.end()) {
-        const auto& resourceJSON{findResources.value()};
-        LoadResourceList(resourceJSON);
-    }
-
-    const auto& findSprites{json.find("sprites")};
-    if(findSprites != json.end()) {
-        int index = 0;
-        for(auto spriteJSON : findSprites.value()) {
-            LoadSprite(menu.options.at(index++).widget, spriteJSON);
-        }
-    }
-
-    const auto& findTexts{json.find("texts")};
-    if(findTexts != json.end()) {
-        int index = 0;
-        for(auto textJSON : findTexts.value()) {
-            LoadText(menu.options.at(index++).widget, textJSON);
-        }
-    }
+    const auto&                 findLayerIndex{json.find("layerIndex")};
+    const auto&                 layerList{findLayerIndex.value()};
+    LoadLayerIndex(layerList);
     
-    const auto& findBounds{json.find("bounds")};
-    if(findBounds != json.end()) {
-        int index = 0;
-        for(auto boundsJSON : findBounds.value()) {
-            LoadBoundingBox(menu.options.at(index++).widget, boundsJSON);
-        }
+    const auto&                 findLayers{json.find("layers")};
+    const auto&                 layersJSON{findLayers.value()};
+    for(const auto& layerJSON : layersJSON) {
+        LoadLayer(layerJSON);
     }
 
-    auto& inputSystem{*Application::GetInstance().GetInputSystem()};
-    auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
-    auto& labelMgr{Application::GetInstance().GetRenderSystem()->GetLabelMgr()};
-    for(int index = 0; index < menu.options.size(); ++index) {
-        Entity  entity{menu.options.at(index).widget};
-        auto    bounds{boundingBoxMgr.Get(entity)};
-        auto    sprite{spriteMgr.Get(entity)};
-        auto    text{textMgr.Get(entity)};
-        if(bounds && sprite) {
-            renderableMgr.Add(entity, *bounds, *sprite);
+    for(int index = 0; index < layers.size(); ++index) {
+        Layer& layer{layers[index]};
+        switch(layer.typeID) {
+            case Layer::TypeID::Decoration: {
+                CreateDecorations(layer);
+            } break;
+            case Layer::TypeID::MenuButton: {
+                CreateMenuButtons(layer);
+            } break;
+            case Layer::TypeID::MenuLabel: {
+                CreateMenuLabels(layer);
+            } break;
         }
-        if(bounds && text) {
-            labelMgr.Add(entity, *bounds, *text);
-        }
-        if(bounds) {
-            hoverableMgr.Add(entity, *bounds);
-            auto hoverable{hoverableMgr.Get(entity)};
-            inputSystem.Subscribe(hoverable);
-
-            leftClickableMgr.Add(entity, *bounds);
-            auto leftClickable{leftClickableMgr.Get(entity)};
-            inputSystem.Subscribe(leftClickable);
-        }
-        if(sprite) {
-            textureSwitcherMgr.Add(entity, *sprite);
-        }
-    }
-
-    auto& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignLabelMgr()};
-    const auto& findAlignLabels{json.find("alignLabels")};
-    if(findAlignLabels != json.end()) {
-        int index = 0;
-        for(auto alignLabelJSON : findAlignLabels.value()) {
-            Entity              owner{menu.options.at(index++).widget};
-            Alignment           alignment{LoadAlignLabel(alignLabelJSON)};
-            Label*              label{labelMgr.Get(owner)};
-            alignLabelMgr.Add(owner, alignment, *label);
-        }
-    }
-
-    const auto& findTextureSwitches{json.find("textureSwitches")};
-    if(findTextureSwitches != json.end()) {
-        LoadTextureSwitches(findTextureSwitches.value());
     }
 }
 
 nlohmann::json Scene::SaveToJSON() const {
-    nlohmann::json spriteOutput;
-    const auto spriteList{spriteMgr.GetList()};
-    for(const auto& sprite : spriteList) {
-        spriteOutput += sprite->SaveToJSON();
-    }
-    nlohmann::json textOutput;
-    const auto textList{textMgr.GetList()};
-    for(const auto& text : textList) {
-        textOutput += text->SaveToJSON();
-    }
-    nlohmann::json boundsOutput;
-    const auto boundsList{boundingBoxMgr.GetList()};
-    for(const auto& bounds : boundsList) {
-        boundsOutput += bounds->SaveToJSON();
-    }
-    const nlohmann::json output{
-            {"sprites",
-                spriteOutput
-            },
-            {"texts",
-                textOutput
-            },
-            {"bounds",
-                boundsOutput
-            }
-    };
-    return output;
+    return nlohmann::json{};
 }
 
 SpriteMgr& Scene::GetSpriteMgr() const {
@@ -190,134 +99,301 @@ void Scene::ConfirmSelectedMenuOption() {
     }
 }
 
-const std::vector<ResourceToken>& Scene::GetFontList() const {
-    return fontList;
+Scene::Layer* Scene::GetLayer(std::string_view name) {
+    for(auto iter = layers.begin(); iter != layers.end(); ++iter) {
+        if(iter->name.compare(name) == 0) {
+            return &(*iter);
+        }
+    }
+    return nullptr;
 }
 
-const std::vector<ResourceToken>& Scene::GetTextureList() const {
-    return textureList;
+void Scene::LoadLayerIndex(const nlohmann::json& json) {
+    unsigned int index = 0;
+    for(const auto& layerName : json) {
+        layers.push_back(Layer{});
+        Layer&                  layer{layers.back()};
+        layer.index = index;
+        layerName.get_to(layer.name);
+    }
 }
 
-void Scene::LoadResourceList(const nlohmann::json& json) {
-    const auto& findFonts{json.find("fonts")};
-    const auto& findTextures{json.find("textures")};
+void Scene::LoadLayer(const nlohmann::json& json) {
+    ResourceMgr&                resourceMgr{Application::GetInstance().GetResourceMgr()};
+    const auto&                 findName{json.find("name")};
+    if(findName != json.end()) {
+        std::string             name{findName.value().template get<std::string>()};
+        Layer*                  layerPtr{GetLayer(name)};
+        if(!layerPtr)           {return;}
+        Layer&                  layer{*layerPtr};
+        const auto&             findType{json.find("type")};
+        if(findType != json.end()) {
+            std::string         typeName{findType.value().template get<std::string>()};
+            if(typeName.compare("decoration") == 0) {
+                layer.typeID = Layer::TypeID::Decoration;
+            }
+            else if(typeName.compare("menuButton") == 0) {
+                layer.typeID = Layer::TypeID::MenuButton;
+            }
+            else if(typeName.compare("menuLabel") == 0) {
+                layer.typeID = Layer::TypeID::MenuLabel;
+            }
+
+            const auto&             findResources{json.find("resources")};
+            const auto&             findBounds{json.find("bounds")};
+            const auto&             findSprites{json.find("sprites")};
+            const auto&             findTexts{json.find("texts")};
+            const auto&             findTextureSwitches{json.find("textureSwitches")};
+            const auto&             findAlignLabels{json.find("alignLabels")};
+
+            if(findResources != json.end()) {
+                const auto&         resourcesJSON{findResources.value()};
+                LoadResources(resourcesJSON, layer);
+            }
+
+            for(const auto& font : layer.fonts) {
+                resourceMgr.LoadFont(font.id, font.path);
+            }
+            for(const auto& texture : layer.textures) {
+                resourceMgr.LoadTexture(texture.id, texture.path);
+            }
+
+            if(findBounds != json.end()) {
+                const auto&         boundsJSON{findBounds.value()};
+                LoadBoundingBoxes(boundsJSON, layer);
+            }
+            if(findSprites != json.end()) {
+                const auto&         spritesJSON{findSprites.value()};
+                LoadSprites(spritesJSON, layer);
+            }
+            if(findTexts != json.end()) {
+                const auto&         textsJSON{findTexts.value()};
+                LoadTexts(textsJSON, layer);
+            }
+            if(findTextureSwitches != json.end()) {
+                const auto&         textureSwitches{findTextureSwitches.value()};
+                LoadTextureSwitches(textureSwitches, layer);
+            }
+            if(findAlignLabels != json.end()) {
+                const auto&         alignLabelsJSON{findAlignLabels.value()};
+                LoadLabelAlignments(alignLabelsJSON, layer);
+            }
+        }
+    }   
+}
+
+void Scene::LoadResources(const nlohmann::json& json, Layer& layer) {
+    const auto&                 findFonts{json.find("fonts")};
     if(findFonts != json.end()) {
-        for(auto fontJSON : findFonts.value()) {
-            const auto& findID{fontJSON.find("id")};
-            const auto& findPath{fontJSON.find("path")};
+        for(const auto& fontJSON : findFonts.value()) {
+            const auto&         findID{fontJSON.find("id")};
+            const auto&         findPath{fontJSON.find("path")};
             if(     findID != fontJSON.end()
                 &&  findPath != fontJSON.end()) {
-                const ResourceToken font{
-                    findID.value().template get<std::string>(),
-                    findPath.value().template get<std::string>()
-                };
-                fontList.push_back(font);
+                layer.fonts.push_back(ResourceToken{
+                                        findID.value().template get<std::string>(),
+                                        findPath.value().template get<std::string>()});
             }
         }
-        for(const auto& font : fontList) {
-            resourceMgr.LoadFont(font.id, font.path);
-        }
     }
+    const auto&         findTextures{json.find("textures")};
     if(findTextures != json.end()) {
-        for(auto textureJSON : findTextures.value()) {
-            const auto& findID{textureJSON.find("id")};
-            const auto& findPath{textureJSON.find("path")};
+        for(const auto& textureJSON : findTextures.value()) {
+            const auto&         findID{textureJSON.find("id")};
+            const auto&         findPath{textureJSON.find("path")};
             if(     findID != textureJSON.end()
                 &&  findPath != textureJSON.end()) {
-                const ResourceToken texture{
-                    findID.value().template get<std::string>(),
-                    findPath.value().template get<std::string>()
-                };
-                textureList.push_back(texture);
+                layer.textures.push_back(ResourceToken{
+                                            findID.value().template get<std::string>(),
+                                            findPath.value().template get<std::string>()});
             }
         }
-        for(const auto& texture : textureList) {
-            resourceMgr.LoadTexture(texture.id, texture.path);
+    }
+}
+
+void Scene::LoadBoundingBoxes(const nlohmann::json& json, Layer& layer) {
+    for(const auto& boundsJSON : json) {
+        const auto&         findBoundsRect{boundsJSON.find("boundsRect")};
+        const auto&         rectangle{findBoundsRect.value()};
+        const auto&     findLeft{rectangle.find("left")};
+        const auto&     findTop{rectangle.find("top")};
+        const auto&     findWidth{rectangle.find("width")};
+        const auto&     findHeight{rectangle.find("height")};
+        if(     findLeft != rectangle.end()
+            &&  findTop != rectangle.end()
+            &&  findWidth != rectangle.end()
+            &&  findHeight != rectangle.end()) {
+            layer.boundingBoxes.push_back(sf::Rect<unsigned int>{
+                findLeft.value(),
+                findTop.value(),
+                findWidth.value(),
+                findHeight.value()
+            });
         }
     }
 }
 
-void Scene::LoadSprite(Entity owner, const nlohmann::json& json) {
-    spriteMgr.Add(owner);
-    Sprite* sprite{spriteMgr.Get(owner)};
-    sprite->LoadFromJSON(json);
-}
-
-void Scene::LoadText(Entity owner, const nlohmann::json& json) {
-    textMgr.Add(owner);
-    Text* text{textMgr.Get(owner)};
-    text->LoadFromJSON(json);
-}
-
-void Scene::LoadBoundingBox(Entity owner, const nlohmann::json& json) {
-    boundingBoxMgr.Add(owner);
-    BoundingBox* bounds{boundingBoxMgr.Get(owner)};
-    bounds->LoadFromJSON(json);
-}
-
-Alignment Scene::LoadAlignLabel(const nlohmann::json& json) const {
-    Alignment alignment{Alignment::Left};
-    const auto& findAlignment{json.find("alignment")};
-    const std::string alignName{findAlignment.value().template get<std::string>()};
-    if(alignName.compare(AlignmentNames.at((int)Alignment::Left)) == 0) {
-        alignment = Alignment::Left;
+void Scene::LoadSprites(const nlohmann::json& json, Layer& layer) {
+    ResourceMgr&                    resourceMgr{Application::GetInstance().GetResourceMgr()};
+    for(const auto& spriteJSON : json) {
+        const auto&                 findAttachments{spriteJSON.find("attachments")};
+        const auto&                 attachmentsJSON{findAttachments.value()};
+        const auto&                 findTextures{attachmentsJSON.find("textures")};
+        if(findTextures != attachmentsJSON.end()) {
+            const auto&             texturesJSON{findTextures.value()};
+            ResourceID              textureID{texturesJSON.begin()->template get<std::string>()};
+            Texture*                texture{resourceMgr.GetTexture(textureID)};
+            layer.spriteAttachments.push_back(texture);
+        }
     }
-    else if(alignName.compare(AlignmentNames.at((int)Alignment::Center)) == 0) {
-        alignment = Alignment::Center;
-    }
-    else if(alignName.compare(AlignmentNames.at((int)Alignment::Right)) == 0) {
-        alignment = Alignment::Right;
-    }
-    return alignment;
 }
 
-void Scene::LoadTextureSwitches(const nlohmann::json& json) {
-    auto& eventSystem{*Application::GetInstance().GetEventSystem()};
-    for(int index = 0; index < menu.options.size(); ++index) {
-        Entity                              owner{menu.options.at(index).widget};
-        auto                                sprite{spriteMgr.Get(owner)};
-        if(sprite) {
-            textureSwitcherMgr.Add(owner, *sprite);
-            auto&                           textureSwitcher{*textureSwitcherMgr.Get(owner)};
-            for(auto textureSwitchJSON : json) {
-                const auto&                 findTriggerEvent{textureSwitchJSON.find("triggerEvent")};
-                const auto&                 findTextureID{textureSwitchJSON.find("textureID")};
-                Event::TypeID               triggerEvent;
-                ResourceID                  textureID;
-                if(findTriggerEvent != textureSwitchJSON.end()) {
-                    std::string     eventName{findTriggerEvent.value().template get<std::string>()};
-                    if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStarted)) == 0) {
-                        triggerEvent = Event::TypeID::CursorHoveringStarted;
+void Scene::LoadTexts(const nlohmann::json& json, Layer& layer) {
+    ResourceMgr&                    resourceMgr{Application::GetInstance().GetResourceMgr()};
+    for(const auto& textJSON : json) {
+        const auto&                 findContents{textJSON.find("contents")};
+        if(findContents != textJSON.end()) {
+            layer.textContents.push_back(findContents.value().template get<std::string>());
+        }
+        const auto&                 findFontParam{textJSON.find("fontParameters")};
+        if(findFontParam != textJSON.end()) {
+            const auto&             fontParamJSON{findFontParam.value()};
+            const auto&             findFontID{fontParamJSON.find("id")};
+            const auto&             findFontSize{fontParamJSON.find("fontSize")};
+            const auto&             findOutlineColor{fontParamJSON.find("outlineColor")};
+            const auto&             findFillColor{fontParamJSON.find("fillColor")};
+            if(     findFontID != fontParamJSON.end()
+                &&  findFontSize != fontParamJSON.end()
+                &&  findOutlineColor != fontParamJSON.end()
+                &&  findFillColor != fontParamJSON.end()) {
+                layer.fontParameters.push_back(
+                    Text::FontParameters{
+                        findFontID.value().template get<std::string>(),
+                        findFontSize.value(),
+                        GetColorFromHex(findOutlineColor.value().template get<std::string>()),
+                        GetColorFromHex(findFillColor.value().template get<std::string>())
                     }
-                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStopped)) == 0) {
-                        triggerEvent = Event::TypeID::CursorHoveringStopped;
-                    }
-                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressStarted)) == 0) {
-                        triggerEvent = Event::TypeID::ButtonPressStarted;
-                    }
-                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressCompleted)) == 0) {
-                        triggerEvent = Event::TypeID::ButtonPressCompleted;
-                    }
-                    else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressAborted)) == 0) {
-                        triggerEvent = Event::TypeID::ButtonPressAborted;
-                    }
-                    else {
-                        continue;
-                    }
-                }
-                if(findTextureID != textureSwitchJSON.end()) {
-                    findTextureID.value().get_to(textureID);
-                    if(!textureSwitcher.Contains(textureID)) {
-                        Texture*        texture{resourceMgr.GetTexture(textureID)};
-                        textureSwitcher.Attach(texture);
-                    }
-                }
-                if(     findTriggerEvent != textureSwitchJSON.end()
-                    &&  findTextureID != textureSwitchJSON.end()) {
-                    textureSwitcher.AddTrigger(triggerEvent, textureID);
-                    eventSystem.Subscribe(&textureSwitcher, triggerEvent);
-                }
+                );
             }
         }
-    }    
+        const auto&                 findAttachments{textJSON.find("attachments")};
+        const auto&                 attachmentsJSON{findAttachments.value()};
+        const auto&                 findFonts{attachmentsJSON.find("fonts")};
+        if(findFonts != attachmentsJSON.end()) {
+            const auto&             fontsJSON{findFonts.value()};
+            ResourceID              fontID{fontsJSON.begin()->template get<std::string>()};
+            Font*                   font{resourceMgr.GetFont(fontID)};
+            layer.textAttachments.push_back(font);
+        }
+    }
+}
+
+void Scene::LoadTextureSwitches(const nlohmann::json& json, Layer& layer) {
+    for(const auto& textureSwitch : json) {
+        const auto&                 findTriggerEvent{textureSwitch.find("triggerEvent")};
+        const auto&                 findTextureID{textureSwitch.find("textureID")};
+        if(     findTriggerEvent != textureSwitch.end()
+            &&  findTextureID != textureSwitch.end()) {
+            std::string             eventName{findTriggerEvent.value().template get<std::string>()};
+            Event::TypeID           triggerEvent;
+            if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStarted)) == 0) {
+                triggerEvent = Event::TypeID::CursorHoveringStarted;
+            }
+            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStopped)) == 0) {
+                triggerEvent = Event::TypeID::CursorHoveringStopped;
+            }
+            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressStarted)) == 0) {
+                triggerEvent = Event::TypeID::ButtonPressStarted;
+            }
+            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressCompleted)) == 0) {
+                triggerEvent = Event::TypeID::ButtonPressCompleted;
+            }
+            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressAborted)) == 0) {
+                triggerEvent = Event::TypeID::ButtonPressAborted;
+            }
+            else {
+                continue;
+            }
+            layer.textureSwitchTriggers.push_back(std::make_pair(
+                triggerEvent,
+                findTextureID.value().template get<std::string>()   
+            ));
+        }
+    }
+}
+
+void Scene::LoadLabelAlignments(const nlohmann::json& json, Layer& layer) {
+    for(const auto& alignLabel : json) {
+        const auto&                 findAlignment{alignLabel.find("alignment")};
+        if(findAlignment != alignLabel.end()) {
+            std::string             alignmentName{findAlignment.value().template get<std::string>()};
+            Alignment               alignment{Alignment::Left};
+            if(alignmentName.compare("left") == 0) {
+                alignment = Alignment::Left;
+            }
+            else if(alignmentName.compare("center") == 0) {
+                alignment = Alignment::Center;
+            }
+            else if(alignmentName.compare("right") == 0) {
+                alignment = Alignment::Right;
+            }
+            layer.labelAlignments.push_back(alignment);
+        }
+    }
+}
+
+void Scene::CreateDecorations(Layer& layer) {
+    /*  A Decoration layer has:
+            A list of ResourceTokens {ResourceID, path} for loading Textures
+            A list of BoundingBoxes {sf::Rect<unsigned int>}
+            A list of Sprites {ResourceID for Texture to attach}
+    */
+
+    ScaleRenderableMgr& scaleRenderableMgr{Application::GetInstance().GetRenderSystem()->GetScaleRenderableMgr()};
+    for(int index = 0; index < layer.boundingBoxes.size(); ++index) {
+        layer.entities.push_back(entityMgr.CreateEntity());
+    }
+    Entity firstEntity{*layer.entities.begin()};
+    int index = firstEntity;
+    for(const auto& boundsRect : layer.boundingBoxes) {
+        boundingBoxMgr.Add((Entity)index++, boundsRect);
+    }
+    index = firstEntity;
+    for(const auto& texture : layer.spriteAttachments) {
+        spriteMgr.Add((Entity)index);
+        auto& sprite{*spriteMgr.Get((Entity)index)};
+        Resource* attachment{layer.spriteAttachments.at(index - firstEntity)};
+        sprite.Attach(attachment);
+        if(attachment->GetTypeID() == Resource::TypeID::Texture) {
+            Texture* texture{dynamic_cast<Texture*>(attachment)};
+            const auto& textureSize{texture->GetTexture().getSize()};
+            BoundingBox& bounds{*boundingBoxMgr.Get((Entity)index)};
+            if(     textureSize.x < bounds.GetWidth()
+                ||  textureSize.y < bounds.GetHeight()) {
+                scaleRenderableMgr.Add((Entity)index, bounds, sprite);
+            }
+        }
+        index++;
+    }
+    auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
+    for(int entityIndex = firstEntity; entityIndex < firstEntity + layer.entities.size(); ++entityIndex) {
+        renderableMgr.Add((Entity)entityIndex, *boundingBoxMgr.Get(entityIndex), *spriteMgr.Get(entityIndex));
+    }
+}
+
+void Scene::CreateMenuButtons(Layer& layer) {
+    /*  A MenuButton layer has:
+            A list of ResourceTokens {ResourceID, path} for loading Textures
+            A list of BoundingBoxes {sf::Rect<unsigned int>}
+            A list of Sprites {ResourceID for Texture to attach}
+            A list of TextureSwitches {TriggerEventID, ResourceID} associating Events with Texture IDs
+    */
+}
+
+void Scene::CreateMenuLabels(Layer& layer) {
+    /*  A MenuLabel layer has:
+            A list of ResourceTokens {ResourceID, path} for loading Fonts
+            A list of Texts {std::string, FontParameters, ResourceID for Font to attach}
+            A list of AlignLabels {Alignment}
+    */
 }

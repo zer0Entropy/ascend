@@ -1,5 +1,6 @@
 #pragma once
 
+#include <SFML/Graphics/Rect.hpp>
 #include "menu.hpp"
 #include "optionSelector.hpp"
 #include "../component/boundingBox.hpp"
@@ -14,6 +15,33 @@
 
 class Scene: public ISerializeable, public ILogMsgPublisher {
 public:
+    struct Layer {
+        enum class TypeID {
+            Decoration,
+            MenuButton,
+            MenuLabel
+        };
+
+        int                                 index;
+        std::string                         name;
+        TypeID                              typeID;
+
+        std::vector<Entity>                 entities;
+        
+        std::vector<ResourceToken>          fonts;
+        std::vector<ResourceToken>          textures;
+
+        std::vector<sf::Rect<unsigned int>> boundingBoxes;
+        std::vector<Resource*>              spriteAttachments;
+        std::vector<Resource*>              textAttachments;
+        std::vector<std::string>            textContents;
+        std::vector<Text::FontParameters>   fontParameters;
+        std::vector<Alignment>              labelAlignments;
+        std::vector<
+            std::pair<  Event::TypeID,
+                        ResourceID>>        textureSwitchTriggers;
+    };
+
     Scene(EntityMgr& entMgr, ResourceMgr& resMgr);
     Scene(const Scene& copy) = delete;
     Scene(Scene&& move) = delete;
@@ -35,16 +63,21 @@ public:
     void                                    SetSelectedMenuOption(int index);
     void                                    ConfirmSelectedMenuOption();
 
-    const std::vector<ResourceToken>&       GetFontList() const;
-    const std::vector<ResourceToken>&       GetTextureList() const;
-
 private:
-    void                                    LoadResourceList(const nlohmann::json& json);
-    void                                    LoadSprite(Entity owner, const nlohmann::json& json);
-    void                                    LoadText(Entity owner, const nlohmann::json& json);
-    void                                    LoadBoundingBox(Entity owner, const nlohmann::json& json);
-    Alignment                               LoadAlignLabel(const nlohmann::json& json) const;
-    void                                    LoadTextureSwitches(const nlohmann::json& json);
+    Layer*                                  GetLayer(std::string_view name);
+    void                                    LoadLayerIndex(const nlohmann::json& json);
+    void                                    LoadLayer(const nlohmann::json& json);
+    void                                    LoadResources(const nlohmann::json& json, Layer& layer);
+    void                                    LoadBoundingBoxes(const nlohmann::json& json, Layer& layer);
+    void                                    LoadSprites(const nlohmann::json& json, Layer& layer);
+    void                                    LoadTexts(const nlohmann::json& json, Layer& layer);
+    void                                    LoadTextureSwitches(const nlohmann::json& json, Layer& layer);
+    void                                    LoadLabelAlignments(const nlohmann::json& json, Layer& layer);
+
+    void                                    CreateDecorations(Layer& layer);
+    void                                    CreateMenuButtons(Layer& layer);
+    void                                    CreateMenuLabels(Layer& layer);
+
 
     SpriteMgr                               spriteMgr;
     TextMgr                                 textMgr;
@@ -56,8 +89,7 @@ private:
     EntityMgr&                              entityMgr;
     ResourceMgr&                            resourceMgr;
 
-    std::vector<ResourceToken>              fontList;
-    std::vector<ResourceToken>              textureList;
+    std::vector<Layer>                      layers;
 
     Menu                                    menu;
     MenuOptionSelector                      optionSelector;

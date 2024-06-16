@@ -4,6 +4,7 @@
 #include "../component/renderable.hpp"
 #include "../component/label.hpp"
 #include "../component/alignLabel.hpp"
+#include "../component/scale.hpp"
 #include "../interface/system.hpp"
 
 class RenderSystem: public ISystem {
@@ -16,10 +17,12 @@ public:
     RenderableMgr&                              GetRenderableMgr() const;
     LabelMgr&                                   GetLabelMgr() const;
     AlignLabelMgr&                              GetAlignLabelMgr() const;
+    ScaleRenderableMgr&                         GetScaleRenderableMgr() const;
 
 private:
     sf::RenderWindow&                           window;
     RenderableMgr                               renderableMgr;
     LabelMgr                                    labelMgr;
     AlignLabelMgr                               alignLabelMgr;
+    ScaleRenderableMgr                          scaleRenderableMgr;
 };

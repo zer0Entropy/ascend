@@ -10,6 +10,7 @@ public:
         Sprite,
         Text,
         Renderable,
+        ScaleRenderable,
         Label,
         AlignLabel,
         Hoverable,

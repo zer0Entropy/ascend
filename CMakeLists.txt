@@ -30,6 +30,7 @@ add_executable(ascend       src/main.cpp
                             src/component/hoverable.cpp
                             src/component/textureSwitcher.cpp
                             src/component/leftClickable.cpp
+                            src/component/scale.cpp
                             src/resource/resource.cpp
                             src/resource/textFile.cpp
                             src/resource/texture.cpp

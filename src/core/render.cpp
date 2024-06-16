@@ -11,6 +11,11 @@ void RenderSystem::Update() {
     for(const auto& renderable : renderableList) {
         const auto& bounds{renderable->GetBounds()};
         auto& sprite{renderable->GetSprite()};
+        auto scaleRenderable{scaleRenderableMgr.Get(sprite.GetOwner())};
+        if(scaleRenderable) {
+            const auto& scaleFactor{scaleRenderable->GetScalingFactor()};
+            sprite.GetSprite().setScale(scaleFactor.x, scaleFactor.y);
+        }
         sprite.GetSprite().setPosition(bounds.GetLeft(), bounds.GetTop());
         window.draw(sprite.GetSprite());
     }
@@ -63,4 +68,8 @@ LabelMgr& RenderSystem::GetLabelMgr() const {
 
 AlignLabelMgr& RenderSystem::GetAlignLabelMgr() const {
     return const_cast<AlignLabelMgr&>(alignLabelMgr);
+}
+
+ScaleRenderableMgr& RenderSystem::GetScaleRenderableMgr() const {
+    return const_cast<ScaleRenderableMgr&>(scaleRenderableMgr);
 }
