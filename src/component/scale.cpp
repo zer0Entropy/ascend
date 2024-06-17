@@ -9,12 +9,10 @@ ScaleRenderable::ScaleRenderable(Entity cEntity, const BoundingBox& boundsCmp, S
     const auto& attachments{sprite.GetAttachments()};
     if(!attachments.empty()) {
         Resource* attachedResource{*attachments.begin()};
-        if(attachedResource->GetTypeID() == Resource::TypeID::Texture) {
-            Texture* texture{dynamic_cast<Texture*>(attachedResource)};
-            const auto& textureSize{texture->GetTexture().getSize()};
-            scalingFactor.x = (float)boundingBox.GetWidth() / (float)textureSize.x;
-            scalingFactor.y = (float)boundingBox.GetHeight() / (float)textureSize.y;
-        }
+        Texture* texture{dynamic_cast<Texture*>(attachedResource)};
+        const auto& textureSize{texture->GetTexture().getSize()};
+        scalingFactor.x = (float)boundingBox.GetWidth() / (float)textureSize.x;
+        scalingFactor.y = (float)boundingBox.GetHeight() / (float)textureSize.y;
     }
 }
 

@@ -34,6 +34,8 @@ add_executable(ascend       src/main.cpp
                             src/resource/resource.cpp
                             src/resource/textFile.cpp
                             src/resource/texture.cpp
+                            src/resource/compositeTexture.cpp
+                            src/resource/repeatingTexture.cpp
                             src/resource/font.cpp
                             src/resource/resourceMgr.cpp
                             src/scene/scene.cpp

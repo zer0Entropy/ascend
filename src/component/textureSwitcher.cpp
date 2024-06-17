@@ -15,7 +15,9 @@ nlohmann::json TextureSwitcher::SaveToJSON() const {
 }
 
 void TextureSwitcher::Attach(Resource* resource) {
-    if(resource->GetTypeID() == Resource::TypeID::Texture) {
+    if(     resource->GetTypeID() == Resource::TypeID::SimpleTexture
+        ||  resource->GetTypeID() == Resource::TypeID::CompositeTexture
+        ||  resource->GetTypeID() == Resource::TypeID::RepeatingTexture) {
         ICanHaveAttachments::Attach(resource);
     }
 }

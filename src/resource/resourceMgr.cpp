@@ -1,5 +1,7 @@
 #include <iomanip>
 #include "../include/resource/resourceMgr.hpp"
+#include "../include/resource/compositeTexture.hpp"
+#include "../include/resource/repeatingTexture.hpp"
 
 Font* ResourceMgr::LoadFont(const ResourceID& resourceID, std::string_view resourcePath) {
     auto result{
@@ -103,6 +105,52 @@ Texture* ResourceMgr::LoadTexture(const ResourceID& resourceID, std::string_view
     };
     if(result.second) {
         std::string msg{"Texture \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg);
+        return GetTexture(resourceID);
+    }
+    return nullptr;
+}
+
+Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
+                                    std::string_view resourcePath,
+                                    Orientation orientation,
+                                    unsigned int numRepetitions) {
+    auto result{
+        textureMap.insert(std::make_pair(resourceID, std::make_unique<RepeatingTexture>(
+                                                        resourceID,
+                                                        resourcePath,
+                                                        orientation,
+                                                        numRepetitions)))
+    };
+    if(result.second) {
+        std::string msg{"Texture \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg);
+        return GetTexture(resourceID);
+    }
+    return nullptr;
+}
+
+Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
+                                    const sf::Vector2u size,
+                                    const std::vector<ResourceID>& sourceTextureIDs,
+                                    const std::vector<sf::Vector2u>& destinations) {
+    std::vector<Texture*> sourceTextures;
+    for(const auto& srcTextureID : sourceTextureIDs) {
+        Texture* texture = GetTexture(srcTextureID);
+        if(texture) {
+            sourceTextures.push_back(texture);
+        }
+    }
+    auto result{
+        textureMap.insert(std::make_pair(resourceID, std::make_unique<CompositeTexture>(resourceID,size)))
+    };
+    if(!sourceTextures.empty() && result.second) {
+        CompositeTexture& composite{*dynamic_cast<CompositeTexture*>(GetTexture(resourceID))};
+        int index = 0;
+        for(const auto& destination : destinations) {
+            composite.AddTexture(sourceTextures[index]->GetTexture(), destination);
+        }
+        std::string msg{"Texture \"" + resourceID + "\" successfully loaded (as a composite of previously-loaded textures)."};
         this->PublishMsg(msg);
         return GetTexture(resourceID);
     }

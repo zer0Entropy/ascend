@@ -5,9 +5,30 @@
 
 class Texture: public Resource {
 public:
-    Texture(const ResourceID& resID, std::string_view resPath);
+    enum class Style {
+        Simple,
+        Repeating,
+        Composite
+    };
+
+    Texture() = delete;
+    Texture(                const ResourceID& resID,
+                            std::string_view resPath,
+                            Resource::TypeID resType = Resource::TypeID::SimpleTexture);
+    Texture(const Texture& copy) = default;
+    Texture(Texture&& move) = default;
+    virtual ~Texture() = default;
+    Texture& operator=(const Texture& copy) = default;
+    Texture& operator=(Texture&& move) = default;
 
     const sf::Texture&      GetTexture() const;
+
+    Style                   GetStyle() const;
+    
+protected:
+    sf::Texture&            GetDestTexture() const;
+
 private:
     sf::Texture             texture;
+    Style                   style;
 };

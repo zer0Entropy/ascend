@@ -364,7 +364,9 @@ void Scene::CreateDecorations(Layer& layer) {
         auto& sprite{*spriteMgr.Get((Entity)index)};
         Resource* attachment{layer.spriteAttachments.at(index - firstEntity)};
         sprite.Attach(attachment);
-        if(attachment->GetTypeID() == Resource::TypeID::Texture) {
+        if(     attachment->GetTypeID() == Resource::TypeID::SimpleTexture
+            ||  attachment->GetTypeID() == Resource::TypeID::CompositeTexture
+            ||  attachment->GetTypeID() == Resource::TypeID::RepeatingTexture) {
             Texture* texture{dynamic_cast<Texture*>(attachment)};
             const auto& textureSize{texture->GetTexture().getSize()};
             BoundingBox& bounds{*boundingBoxMgr.Get((Entity)index)};

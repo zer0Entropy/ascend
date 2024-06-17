@@ -17,6 +17,15 @@ constexpr std::array<std::string, NumAlignments> AlignmentNames{
     "left", "center", "right"
 };
 
+enum class Orientation {
+    Horizontal,
+    Vertical
+};
+constexpr int NumOrientations = 2;
+constexpr std::array<std::string, NumOrientations> OrientationNames{
+    "horizontal", "vertical"
+};
+
 template<typename T>
 bool IsInBounds(sf::Vector2<T> position, sf::Rect<T> rect) {
     bool inBounds{false};

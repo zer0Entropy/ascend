@@ -37,7 +37,9 @@ nlohmann::json Sprite::SaveToJSON() const {
 void Sprite::Attach(Resource* resource) {
     const auto& attached{this->GetAttachments()};
     if(     attached.size() == 0
-        &&  resource->GetTypeID() == Resource::TypeID::Texture) {
+        && (resource->GetTypeID() == Resource::TypeID::SimpleTexture
+        ||  resource->GetTypeID() == Resource::TypeID::CompositeTexture
+        ||  resource->GetTypeID() == Resource::TypeID::RepeatingTexture)) {
         Texture* texture = dynamic_cast<Texture*>(resource);
         if(texture) {
             sprite.setTexture(texture->GetTexture());
