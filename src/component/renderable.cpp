@@ -23,8 +23,12 @@ Sprite& Renderable::GetSprite() const {
     return sprite;
 }
 
-void RenderableMgr::Add(Entity owner, BoundingBox& boundsCmp, Sprite& spriteCmp) {
+void RenderableMgr::Add(unsigned int layerIndex, Entity owner, BoundingBox& boundsCmp, Sprite& spriteCmp) {
     renderableMap.insert(std::make_pair(owner, std::make_unique<Renderable>(owner, boundsCmp, spriteCmp)));
+    while(layerIndex >= layers.size()) {
+        layers.push_back(RenderLayer{});
+    }
+    layers[layerIndex].push_back(Get(owner));
 }
 
 void RenderableMgr::Remove(Entity owner) {
@@ -45,8 +49,10 @@ Renderable* RenderableMgr::Get(Entity owner) {
 
 std::vector<Renderable*> RenderableMgr::GetList() const {
     std::vector<Renderable*> renderableList;
-    for(const auto& renderable : renderableMap) {
-        renderableList.push_back(renderable.second.get());
+    for(const auto& renderLayer : layers) {
+        for(auto renderable : renderLayer) {
+            renderableList.push_back(renderable);
+        }
     }
     return renderableList;
 }

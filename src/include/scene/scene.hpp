@@ -30,6 +30,8 @@ public:
         
         std::vector<ResourceToken>          fonts;
         std::vector<ResourceToken>          textures;
+        std::vector<RepeatingTextureToken>  repeatingTextures;
+        std::vector<CompositeTextureToken>  compositeTextures;
 
         std::vector<sf::Rect<unsigned int>> boundingBoxes;
         std::vector<Resource*>              spriteAttachments;

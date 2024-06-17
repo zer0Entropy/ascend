@@ -20,7 +20,12 @@ private:
 
 class RenderableMgr {
 public:
-    void                                                        Add(Entity owner, BoundingBox& boundsCmp, Sprite& spriteCmp);
+    using RenderLayer = std::vector<Renderable*>;
+
+    void                                                        Add(    unsigned int layerIndex,
+                                                                        Entity owner,
+                                                                        BoundingBox& boundsCmp,
+                                                                        Sprite& spriteCmp);
 
     void                                                        Remove(Entity owner);
 
@@ -30,4 +35,5 @@ public:
     
 private:
     std::unordered_map<Entity, std::unique_ptr<Renderable>>     renderableMap;
+    std::vector<RenderLayer>                                    layers;
 };
