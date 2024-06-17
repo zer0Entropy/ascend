@@ -26,7 +26,13 @@ public:
     Texture*            LoadTexture(    const ResourceID& resourceID,
                                         std::string_view resourcePath,
                                         Orientation orientation,
-                                        unsigned int numRepetitions);
+                                        unsigned int numRepetitions,
+                                        const sf::IntRect pixelRect = sf::IntRect{0, 0, 0, 0});
+
+    Texture*            LoadTexture(    const ResourceID& resourceID,
+                                        std::string_view resourcePath,
+                                        sf::Vector2u repeatRect,
+                                        const sf::IntRect pixelRect = sf::IntRect{0, 0, 0, 0});
     // Load CompositeTextures
     Texture*            LoadTexture(    const ResourceID& resourceID,
                                         const sf::Vector2u& size,

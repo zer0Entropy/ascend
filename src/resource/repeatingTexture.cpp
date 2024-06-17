@@ -3,12 +3,18 @@
 RepeatingTexture::RepeatingTexture(     const ResourceID& resID,
                                         std::string_view resPath,
                                         Orientation orient,
-                                        unsigned int repeat):
+                                        unsigned int repeat,
+                                        const sf::IntRect sourceRect):
     Texture{resID, resPath, sf::IntRect{0, 0, 0, 0}, Resource::TypeID::RepeatingTexture},
     orientation{orient},
     numRepetitions{repeat} {
 
-    sourceTexture.loadFromFile(this->GetPath());
+    if(sourceRect.width > 0 && sourceRect.height > 0) {
+        sourceTexture.loadFromFile(this->GetPath(), sourceRect);
+    }
+    else {
+        sourceTexture.loadFromFile(this->GetPath());
+    }
     const auto& sourceTextureSize{sourceTexture.getSize()};
     sf::Vector2f destTextureSize{0.0f, 0.0f};
     if(orientation == Orientation::Horizontal) {
@@ -34,6 +40,35 @@ RepeatingTexture::RepeatingTexture(     const ResourceID& resID,
             destTexture.update(sourceTexture, 0, y);
         }
     }
+}
+
+RepeatingTexture::RepeatingTexture( const ResourceID& resID,
+                                    std::string_view resPath,
+                                    const sf::Vector2u& repeatXY,
+                                    const sf::IntRect sourceRect):
+    Texture{resID, resPath, sourceRect, Resource::TypeID::RepeatingTexture},
+    numRepeatHorizontal{repeatXY.x},
+    numRepeatVertical{repeatXY.y} {
+
+    if(sourceRect.width > 0 && sourceRect.height > 0) {
+        sourceTexture.loadFromFile(this->GetPath(), sourceRect);
+    }
+    else {
+        sourceTexture.loadFromFile(this->GetPath());
+    }
+    const auto& sourceTextureSize{sourceTexture.getSize()};
+    sf::Vector2f destTextureSize{
+        (float)(numRepeatHorizontal * sourceTextureSize.x),
+        (float)(numRepeatVertical * sourceTextureSize.y)
+    };
+    sf::Texture& destTexture{this->GetDestTexture()};
+    destTexture.create(destTextureSize.x, destTextureSize.y);
+    for(int y = 0; y < destTextureSize.y; y += sourceTextureSize.y) {
+        for(int x = 0; x < destTextureSize.x; x += sourceTextureSize.x) {
+            destTexture.update(sourceTexture, x, y);
+        }
+    }
+
 }
 
 const sf::Texture& RepeatingTexture::GetSourceTexture() const {

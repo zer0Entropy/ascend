@@ -116,13 +116,34 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
 Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
                                     std::string_view resourcePath,
                                     Orientation orientation,
-                                    unsigned int numRepetitions) {
+                                    unsigned int numRepetitions,
+                                    const sf::IntRect pixelRect) {
     auto result{
         textureMap.insert(std::make_pair(resourceID, std::make_unique<RepeatingTexture>(
                                                         resourceID,
                                                         resourcePath,
                                                         orientation,
-                                                        numRepetitions)))
+                                                        numRepetitions,
+                                                        pixelRect)))
+    };
+    if(result.second) {
+        std::string msg{"Texture \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg);
+        return GetTexture(resourceID);
+    }
+    return nullptr;
+}
+
+Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
+                                    std::string_view resourcePath,
+                                    sf::Vector2u repeatRect,
+                                    const sf::IntRect pixelRect) {
+    auto result{
+        textureMap.insert(std::make_pair(resourceID, std::make_unique<RepeatingTexture>(
+                                                        resourceID,
+                                                        resourcePath,
+                                                        repeatRect,
+                                                        pixelRect)))
     };
     if(result.second) {
         std::string msg{"Texture \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};

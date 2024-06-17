@@ -155,13 +155,22 @@ void Scene::LoadLayer(const nlohmann::json& json) {
                 resourceMgr.LoadFont(font.id, font.path);
             }
             for(const auto& texture : layer.textures) {
-                resourceMgr.LoadTexture(texture.id, texture.path);
+                resourceMgr.LoadTexture(texture.id, texture.path, texture.sourceRect);
             }
             for(const auto& repeatingTexture : layer.repeatingTextures) {
-                resourceMgr.LoadTexture(    repeatingTexture.id,
-                                            repeatingTexture.path,
-                                            repeatingTexture.orientation,
-                                            repeatingTexture.numRepetitions);
+                if(repeatingTexture.isRect) {
+                    resourceMgr.LoadTexture(    repeatingTexture.id,
+                                                repeatingTexture.path,
+                                                repeatingTexture.repeatRect,
+                                                repeatingTexture.sourceRect);
+                }
+                else {
+                    resourceMgr.LoadTexture(    repeatingTexture.id,
+                                                repeatingTexture.path,
+                                                repeatingTexture.orientation,
+                                                repeatingTexture.numRepetitions,
+                                                repeatingTexture.sourceRect);
+                }
             }
             for(const auto& compositeTexture : layer.compositeTextures) {
                 resourceMgr.LoadTexture(    compositeTexture.id,
@@ -208,14 +217,16 @@ void Scene::LoadResources(const nlohmann::json& json, Layer& layer) {
             }
         }
     }
-    const auto&         findTextures{json.find("textures")};
+    const auto&                 findTextures{json.find("textures")};
     if(findTextures != json.end()) {
         for(const auto& textureJSON : findTextures.value()) {
             const auto&         findID{textureJSON.find("id")};
             const auto&         findPath{textureJSON.find("path")};
             const auto&         findStyle{textureJSON.find("style")};
+            const auto&         findSourceRect{textureJSON.find("sourceRect")};
             const auto&         findOrientation{textureJSON.find("orientation")};
             const auto&         findRepetitons{textureJSON.find("repeat")};
+            const auto&         findRepeatRect{textureJSON.find("repeatRect")};
             const auto&         findSize{textureJSON.find("size")};
             const auto&         findSources{textureJSON.find("sources")};
             const auto&         findDestinations{textureJSON.find("destinations")};
@@ -234,31 +245,65 @@ void Scene::LoadResources(const nlohmann::json& json, Layer& layer) {
                 }
             }
 
+            sf::IntRect         sourceRect{0, 0, 0, 0};
+            if(findSourceRect != textureJSON.end()) {
+                const auto& rectangle{findSourceRect.value()};
+                const auto& findLeft{rectangle.find("left")};
+                const auto& findTop{rectangle.find("top")};
+                const auto& findWidth{rectangle.find("width")};
+                const auto& findHeight{rectangle.find("height")};
+                if(     findLeft != rectangle.end()
+                    &&  findTop != rectangle.end()
+                    &&  findWidth != rectangle.end()
+                    &&  findHeight != rectangle.end()) {
+                    sourceRect.left = findLeft.value();
+                    sourceRect.top = findTop.value();
+                    sourceRect.width = findWidth.value();
+                    sourceRect.height = findHeight.value();
+                }
+            }
+
             if(     findID != textureJSON.end()
                 &&  findPath != textureJSON.end()) {
                 // Load SimpleTexture
                 if(textureStyle == Texture::Style::Simple) {
                     layer.textures.push_back(ResourceToken{
                                                 findID.value().template get<std::string>(),
-                                                findPath.value().template get<std::string>()});
+                                                findPath.value().template get<std::string>(),
+                                                sourceRect});
                 }
                 // Load RepeatingTexture
-                else if(    textureStyle == Texture::Style::Repeating
-                        &&  findOrientation != textureJSON.end()
+                else if(textureStyle == Texture::Style::Repeating) {
+                    if(     findOrientation != textureJSON.end()
                         &&  findRepetitons != textureJSON.end()) {
-                    std::string orientString{findOrientation.value().template get<std::string>()};
-                    Orientation orientation{Orientation::Horizontal};
-                    if(orientString.compare(OrientationNames.at((int)Orientation::Horizontal)) == 0) {
-                        orientation = Orientation::Horizontal;
+                        std::string orientString{findOrientation.value().template get<std::string>()};
+                        Orientation orientation{Orientation::Horizontal};
+                        if(orientString.compare(OrientationNames.at((int)Orientation::Horizontal)) == 0) {
+                            orientation = Orientation::Horizontal;
+                        }
+                        else if(orientString.compare(OrientationNames.at((int)Orientation::Vertical)) == 0) {
+                            orientation = Orientation::Vertical;
+                        }
+                        layer.repeatingTextures.push_back(RepeatingTextureToken{
+                                                            findID.value().template get<std::string>(),
+                                                            findPath.value().template get<std::string>(),
+                                                            sourceRect,
+                                                            orientation,
+                                                            findRepetitons.value()});
                     }
-                    else if(orientString.compare(OrientationNames.at((int)Orientation::Vertical)) == 0) {
-                        orientation = Orientation::Vertical;
+                    else if(findRepeatRect != textureJSON.end()) {
+                        const auto& repeatRect{findRepeatRect.value()};
+                        const auto& findX{repeatRect.find("x")};
+                        const auto& findY{repeatRect.find("y")};
+                        if(     findX != repeatRect.end()
+                            &&  findY != repeatRect.end()) {
+                            layer.repeatingTextures.push_back(RepeatingTextureToken{
+                                                            findID.value().template get<std::string>(),
+                                                            findPath.value().template get<std::string>(),
+                                                            sourceRect,
+                                                            sf::Vector2u{findX.value(), findY.value()}});
+                        }
                     }
-                    layer.repeatingTextures.push_back(RepeatingTextureToken{
-                                                        findID.value().template get<std::string>(),
-                                                        findPath.value().template get<std::string>(),
-                                                        orientation,
-                                                        findRepetitons.value()});
                 }
             }
             // Load CompositeTexture
