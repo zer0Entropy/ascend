@@ -19,7 +19,9 @@ public:
     TextFile*           GetTextFile(const ResourceID& resourceID);
 
     // Load SimpleTextures
-    Texture*            LoadTexture(const ResourceID& resourceID, std::string_view resourcePath);
+    Texture*            LoadTexture(    const ResourceID& resourceID,
+                                        std::string_view resourcePath,
+                                        const sf::IntRect pixelRect = sf::IntRect{0, 0, 0, 0});
     // Load RepeatingTextures
     Texture*            LoadTexture(    const ResourceID& resourceID,
                                         std::string_view resourcePath,
@@ -27,7 +29,7 @@ public:
                                         unsigned int numRepetitions);
     // Load CompositeTextures
     Texture*            LoadTexture(    const ResourceID& resourceID,
-                                        const sf::Vector2u size,
+                                        const sf::Vector2u& size,
                                         const std::vector<ResourceID>& sourceTextureIDs,
                                         const std::vector<sf::Vector2u>& destinations);
 

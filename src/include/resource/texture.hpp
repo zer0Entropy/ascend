@@ -14,6 +14,7 @@ public:
     Texture() = delete;
     Texture(                const ResourceID& resID,
                             std::string_view resPath,
+                            const sf::IntRect sourceRect = sf::IntRect{0, 0, 0, 0},
                             Resource::TypeID resType = Resource::TypeID::SimpleTexture);
     Texture(const Texture& copy) = default;
     Texture(Texture&& move) = default;

@@ -1,7 +1,7 @@
 #include "../include/resource/compositeTexture.hpp"
 
 CompositeTexture::CompositeTexture(ResourceID resID, const sf::Vector2u size):
-    Texture{resID, std::string{""}, Resource::TypeID::CompositeTexture} {
+    Texture{resID, std::string{""}, sf::IntRect{0, 0, 0, 0}, Resource::TypeID::CompositeTexture} {
     sf::Texture&            destTexture{this->GetDestTexture()};
     destTexture.create(size.x, size.y);
 }

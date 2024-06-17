@@ -99,9 +99,11 @@ TextFile* ResourceMgr::GetTextFile(const ResourceID& resourceID) {
     return nullptr;
 }
 
-Texture* ResourceMgr::LoadTexture(const ResourceID& resourceID, std::string_view resourcePath) {
+Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
+                                    std::string_view resourcePath,
+                                    const sf::IntRect pixelRect) {
     auto result{
-        textureMap.insert(std::make_pair(resourceID, std::make_unique<Texture>(resourceID, resourcePath)))
+        textureMap.insert(std::make_pair(resourceID, std::make_unique<Texture>(resourceID, resourcePath, pixelRect)))
     };
     if(result.second) {
         std::string msg{"Texture \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
@@ -131,7 +133,7 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
 }
 
 Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
-                                    const sf::Vector2u size,
+                                    const sf::Vector2u& size,
                                     const std::vector<ResourceID>& sourceTextureIDs,
                                     const std::vector<sf::Vector2u>& destinations) {
     std::vector<Texture*> sourceTextures;

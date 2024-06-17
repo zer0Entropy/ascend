@@ -488,6 +488,50 @@ void Scene::CreateMenuButtons(Layer& layer) {
             A list of Sprites {ResourceID for Texture to attach}
             A list of TextureSwitches {TriggerEventID, ResourceID} associating Events with Texture IDs
     */
+    ScaleRenderableMgr& scaleRenderableMgr{Application::GetInstance().GetRenderSystem()->GetScaleRenderableMgr()};
+    for(int index = 0; index < layer.boundingBoxes.size(); ++index) {
+        layer.entities.push_back(entityMgr.CreateEntity());
+    }
+    Entity firstEntity{*layer.entities.begin()};
+    int index = firstEntity;
+    for(const auto& boundsRect : layer.boundingBoxes) {
+        boundingBoxMgr.Add((Entity)index++, boundsRect);
+    }
+    index = firstEntity;
+    for(const auto& texture : layer.spriteAttachments) {
+        spriteMgr.Add((Entity)index);
+        auto& sprite{*spriteMgr.Get((Entity)index)};
+        Resource* attachment{layer.spriteAttachments.at(index - firstEntity)};
+        sprite.Attach(attachment);
+        if(     attachment->GetTypeID() == Resource::TypeID::SimpleTexture
+            ||  attachment->GetTypeID() == Resource::TypeID::CompositeTexture
+            ||  attachment->GetTypeID() == Resource::TypeID::RepeatingTexture) {
+            Texture* texture{dynamic_cast<Texture*>(attachment)};
+            const auto& textureSize{texture->GetTexture().getSize()};
+            BoundingBox& bounds{*boundingBoxMgr.Get((Entity)index)};
+            if(     textureSize.x < bounds.GetWidth()
+                ||  textureSize.y < bounds.GetHeight()) {
+                scaleRenderableMgr.Add((Entity)index, bounds, sprite);
+            }
+        }
+        index++;
+    }
+    index = firstEntity;
+    for(const auto& textureSwitch : layer.textureSwitchTriggers) {
+        textureSwitcherMgr.Add((Entity)index, *spriteMgr.Get((Entity)index));
+        ResourceID textureID{textureSwitch.second};
+        Texture* texture{resourceMgr.GetTexture(textureID)};
+        auto& textureSwitcher{*textureSwitcherMgr.Get((Entity)index)};
+        textureSwitcher.Attach(texture);
+        textureSwitcher.AddTrigger(textureSwitch.first, textureSwitch.second);
+    }
+    auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
+    for(int entityIndex = firstEntity; entityIndex < firstEntity + layer.entities.size(); ++entityIndex) {
+        renderableMgr.Add(  layer.index,
+                            (Entity)entityIndex,
+                            *boundingBoxMgr.Get(entityIndex),
+                            *spriteMgr.Get(entityIndex));
+    }
 }
 
 void Scene::CreateMenuLabels(Layer& layer) {

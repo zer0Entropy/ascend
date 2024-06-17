@@ -2,12 +2,18 @@
 
 Texture::Texture(           const ResourceID& resID,
                             std::string_view resPath,
+                            const sf::IntRect sourceRect,
                             Resource::TypeID resType):
     Resource{resID, resType, resPath} {
     
     if(resType == Resource::TypeID::SimpleTexture) {
         style = Style::Simple;
-        texture.loadFromFile(this->GetPath());
+        if(sourceRect.width > 0 && sourceRect.height > 0) {
+            texture.loadFromFile(this->GetPath(), sourceRect);
+        }
+        else {
+            texture.loadFromFile(this->GetPath());
+        }
     }
     else if(resType == Resource::TypeID::RepeatingTexture) {
         style = Style::Repeating;

@@ -4,7 +4,7 @@ RepeatingTexture::RepeatingTexture(     const ResourceID& resID,
                                         std::string_view resPath,
                                         Orientation orient,
                                         unsigned int repeat):
-    Texture{resID, resPath, Resource::TypeID::RepeatingTexture},
+    Texture{resID, resPath, sf::IntRect{0, 0, 0, 0}, Resource::TypeID::RepeatingTexture},
     orientation{orient},
     numRepetitions{repeat} {
 
