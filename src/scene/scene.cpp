@@ -533,6 +533,8 @@ void Scene::CreateMenuButtons(Layer& layer) {
             A list of Sprites {ResourceID for Texture to attach}
             A list of TextureSwitches {TriggerEventID, ResourceID} associating Events with Texture IDs
     */
+    EventSystem& eventSystem{*Application::GetInstance().GetEventSystem()};
+    InputSystem& inputSystem{*Application::GetInstance().GetInputSystem()};
     ScaleRenderableMgr& scaleRenderableMgr{Application::GetInstance().GetRenderSystem()->GetScaleRenderableMgr()};
     for(int index = 0; index < layer.boundingBoxes.size(); ++index) {
         layer.entities.push_back(entityMgr.CreateEntity());
@@ -561,17 +563,22 @@ void Scene::CreateMenuButtons(Layer& layer) {
         }
         index++;
     }
-    index = firstEntity;
-    for(const auto& textureSwitch : layer.textureSwitchTriggers) {
-        textureSwitcherMgr.Add((Entity)index, *spriteMgr.Get((Entity)index));
-        ResourceID textureID{textureSwitch.second};
-        Texture* texture{resourceMgr.GetTexture(textureID)};
-        auto& textureSwitcher{*textureSwitcherMgr.Get((Entity)index)};
-        textureSwitcher.Attach(texture);
-        textureSwitcher.AddTrigger(textureSwitch.first, textureSwitch.second);
+    for(const auto entity : layer.entities) {
+        BoundingBox* boundingBoxPtr{boundingBoxMgr.Get(entity)};
+        hoverableMgr.Add(entity, *boundingBoxPtr);
+        inputSystem.Subscribe(hoverableMgr.Get(entity));
+        textureSwitcherMgr.Add(entity, *spriteMgr.Get(entity));
+        for(const auto& textureSwitch : layer.textureSwitchTriggers) {
+            ResourceID textureID{textureSwitch.second};
+            Texture* texture{resourceMgr.GetTexture(textureID)};
+            auto& textureSwitcher{*textureSwitcherMgr.Get(entity)};
+            textureSwitcher.Attach(texture);
+            textureSwitcher.AddTrigger(textureSwitch.first, textureSwitch.second);
+            eventSystem.Subscribe(&textureSwitcher, textureSwitch.first);
+        }
     }
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
-    for(int entityIndex = firstEntity; entityIndex < firstEntity + layer.entities.size(); ++entityIndex) {
+    for(int entityIndex = (int)firstEntity; entityIndex < (int)firstEntity + layer.entities.size(); ++entityIndex) {
         renderableMgr.Add(  layer.index,
                             (Entity)entityIndex,
                             *boundingBoxMgr.Get(entityIndex),
@@ -585,4 +592,30 @@ void Scene::CreateMenuLabels(Layer& layer) {
             A list of Texts {std::string, FontParameters, ResourceID for Font to attach}
             A list of AlignLabels {Alignment}
     */
+    LabelMgr& labelMgr{Application::GetInstance().GetRenderSystem()->GetLabelMgr()};
+    AlignLabelMgr& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignLabelMgr()};
+    std::string buttonLayerName{"MenuButtonLayer"};
+    const auto buttonLayerPtr{GetLayer(buttonLayerName)};
+    if(!buttonLayerPtr) {
+        return;
+    }
+    Layer& buttonLayer{*buttonLayerPtr};
+    for(int index = 0; index < buttonLayer.entities.size(); ++index) {
+        layer.entities.push_back(buttonLayer.entities.at(index));
+    }
+    Entity firstEntity{*layer.entities.begin()};
+    int index = (int)firstEntity;
+    for(const auto& textString : layer.textContents) {
+        const auto& fontParam{layer.fontParameters.at(index - (int)firstEntity)};
+        Resource* attachment(layer.textAttachments.at(index - (int)firstEntity));
+        textMgr.Add((Entity)index);
+        Text& text{*textMgr.Get((Entity)index)};
+        text.Attach(attachment);
+        text.SetFontParameters(fontParam);
+        text.SetContents(textString);
+        BoundingBox& boundingBox{*boundingBoxMgr.Get((Entity)index)};
+        labelMgr.Add((Entity)index, boundingBox, text);
+        alignLabelMgr.Add((Entity)index, layer.labelAlignments.at(index - (int)firstEntity), *labelMgr.Get((Entity)index));
+        index++;
+    }
 }
