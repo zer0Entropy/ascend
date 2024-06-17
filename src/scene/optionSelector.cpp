@@ -9,7 +9,13 @@ MenuOptionSelector::MenuOptionSelector(Scene* parent):
 
 void MenuOptionSelector::HandleEvent(const Event& event) {
     if(event.GetTypeID() == Event::TypeID::CursorHoveringStarted) {
-        parentScene->SetSelectedMenuOption((int)event.GetTarget());
+        if(parentScene->GetMenu().options.empty()) {
+            parentScene->SetSelectedMenuOption(-1);    
+        }
+        else {
+            int menuIndex = (int)event.GetTarget() - (int)parentScene->GetMenu().options.at(0).widget;
+            parentScene->SetSelectedMenuOption(menuIndex);
+        }
     }
     else if(event.GetTypeID() == Event::TypeID::CursorHoveringStopped) {
         parentScene->SetSelectedMenuOption(-1);

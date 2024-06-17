@@ -83,6 +83,9 @@ void Scene::SetSelectedMenuOption(int index) {
 }
 
 void Scene::ConfirmSelectedMenuOption() {
+    if(!menu.selectedOption) {
+        return;
+    }
     auto& eventSystem{*Application::GetInstance().GetEventSystem()};
     MenuOption& selection{*menu.selectedOption};
     if(selection.name.compare("New Game") == 0) {
@@ -568,6 +571,8 @@ void Scene::CreateMenuButtons(Layer& layer) {
         hoverableMgr.Add(entity, *boundingBoxPtr);
         inputSystem.Subscribe(hoverableMgr.Get(entity));
         textureSwitcherMgr.Add(entity, *spriteMgr.Get(entity));
+        leftClickableMgr.Add(entity, *boundingBoxPtr);
+        inputSystem.Subscribe(leftClickableMgr.Get(entity));
         for(const auto& textureSwitch : layer.textureSwitchTriggers) {
             ResourceID textureID{textureSwitch.second};
             Texture* texture{resourceMgr.GetTexture(textureID)};
@@ -613,6 +618,7 @@ void Scene::CreateMenuLabels(Layer& layer) {
         text.Attach(attachment);
         text.SetFontParameters(fontParam);
         text.SetContents(textString);
+        menu.options.push_back(MenuOption{(Entity)index, textString});
         BoundingBox& boundingBox{*boundingBoxMgr.Get((Entity)index)};
         labelMgr.Add((Entity)index, boundingBox, text);
         alignLabelMgr.Add((Entity)index, layer.labelAlignments.at(index - (int)firstEntity), *labelMgr.Get((Entity)index));
