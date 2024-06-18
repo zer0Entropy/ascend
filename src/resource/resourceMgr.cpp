@@ -165,7 +165,7 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
         }
     }
     auto result{
-        textureMap.insert(std::make_pair(resourceID, std::make_unique<CompositeTexture>(resourceID,size)))
+        textureMap.insert(std::make_pair(resourceID, std::make_unique<CompositeTexture>(resourceID, size)))
     };
     if(!sourceTextures.empty() && result.second) {
         CompositeTexture& composite{*dynamic_cast<CompositeTexture*>(GetTexture(resourceID))};
@@ -205,6 +205,48 @@ Texture* ResourceMgr::GetTexture(const ResourceID& resourceID) {
         std::string warnMsg{"Resource not found: " + resourceID + "."};
         this->PublishMsg(warnMsg, MsgPriorityID::Warning);
         std::string msg{"ResourceMgr received a request to retrieve the Texture \"" + resourceID + "\", but it does not exist."};
+        this->PublishMsg(msg, MsgPriorityID::Warning);
+    }
+    return nullptr;
+}
+
+Music* ResourceMgr::LoadMusic(const ResourceID& resourceID, std::string_view resourcePath) {
+    auto result{
+        musicMap.insert(std::make_pair(resourceID, std::make_unique<Music>(resourceID, resourcePath)))
+    };
+    if(result.second) {
+        std::string msg{"Music \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg);
+        return GetMusic(resourceID);
+    }
+    return nullptr;
+}
+
+void ResourceMgr::UnloadMusic(const ResourceID& resourceID) {
+    auto iter{musicMap.find(resourceID)};
+    if(iter != musicMap.end()) {
+        iter->second.reset(nullptr);
+        musicMap.erase(iter);
+        std::string msg{"Music \"" + resourceID + "\" was successfully unloaded."};
+        this->PublishMsg(msg);
+    }
+    else {
+        std::string warnMsg{"Resource not found: " + resourceID + "."};
+        this->PublishMsg(warnMsg, MsgPriorityID::Warning);
+        std::string msg{"ResourceMgr received a request to unload the Music \"" + resourceID + "\", but it does not exist."};
+        this->PublishMsg(msg, MsgPriorityID::Warning);
+    }
+}
+
+Music* ResourceMgr::GetMusic(const ResourceID& resourceID) {
+    auto iter{musicMap.find(resourceID)};
+    if(iter != musicMap.end()) {
+        return iter->second.get();
+    }
+    else {
+        std::string warnMsg{"Resource not found: " + resourceID + "."};
+        this->PublishMsg(warnMsg, MsgPriorityID::Warning);
+        std::string msg{"ResourceMgr received a request to retrieve the Music \"" + resourceID + "\", but it does not exist."};
         this->PublishMsg(msg, MsgPriorityID::Warning);
     }
     return nullptr;

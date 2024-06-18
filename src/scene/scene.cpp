@@ -28,6 +28,9 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
     for(int index = 0; index < layers.size(); ++index) {
         Layer& layer{layers[index]};
         switch(layer.typeID) {
+            case Layer::TypeID::Music: {
+                InitMusicPlayer(layer);
+            } break;
             case Layer::TypeID::Decoration: {
                 CreateDecorations(layer);
             } break;
@@ -352,16 +355,29 @@ void Scene::LoadResources(const nlohmann::json& json, Layer& layer) {
             }
         }
     }
+    const auto&                         findMusics{json.find("musics")};
+    if(findMusics != json.end()) {
+        for(const auto& musicJSON : findMusics.value()) {
+            const auto&                 findID{musicJSON.find("id")};
+            const auto&                 findPath{musicJSON.find("path")};
+            if(     findID != musicJSON.end()
+                &&  findPath != musicJSON.end()) {
+                layer.musics.push_back(ResourceToken{
+                    findID.value().template get<std::string>(),
+                    findPath.value().template get<std::string>()});
+            }
+        }
+    }
 }
 
 void Scene::LoadBoundingBoxes(const nlohmann::json& json, Layer& layer) {
     for(const auto& boundsJSON : json) {
         const auto&         findBoundsRect{boundsJSON.find("boundsRect")};
         const auto&         rectangle{findBoundsRect.value()};
-        const auto&     findLeft{rectangle.find("left")};
-        const auto&     findTop{rectangle.find("top")};
-        const auto&     findWidth{rectangle.find("width")};
-        const auto&     findHeight{rectangle.find("height")};
+        const auto&         findLeft{rectangle.find("left")};
+        const auto&         findTop{rectangle.find("top")};
+        const auto&         findWidth{rectangle.find("width")};
+        const auto&         findHeight{rectangle.find("height")};
         if(     findLeft != rectangle.end()
             &&  findTop != rectangle.end()
             &&  findWidth != rectangle.end()
@@ -482,6 +498,22 @@ void Scene::LoadLabelAlignments(const nlohmann::json& json, Layer& layer) {
             }
             layer.labelAlignments.push_back(alignment);
         }
+    }
+}
+
+void Scene::InitMusicPlayer(Layer& layer) {
+    /*  A Decoration layer has:
+            A list of ResourceTokens {ResourceID, path} for loading Musics
+            MusicPlayer parameters {bool, Attachments} for intializing the MusicPlayer
+    */
+    if(layer.musics.empty()) {
+        return;
+    }
+    const ResourceToken&         musicToken{*layer.musics.begin()};
+    Music* music{resourceMgr.LoadMusic(musicToken.id, musicToken.path)};
+    if(music) {
+        musicPlayer.Attach(music);
+        musicPlayer.Play();
     }
 }
 
@@ -625,3 +657,4 @@ void Scene::CreateMenuLabels(Layer& layer) {
         index++;
     }
 }
+

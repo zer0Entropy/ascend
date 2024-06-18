@@ -26,7 +26,11 @@ public:
 
     auto    GetOwner() const    ->  Entity  {return owner;}
 
+    bool    IsEnabled() const {return enabled;}
+    void    ToggleEnabled() {enabled = !enabled;}
+    void    SetEnabled(bool enable) {enabled = enable;}
 private:
     TypeID  typeID;
     Entity  owner;
+    bool    enabled;
 };

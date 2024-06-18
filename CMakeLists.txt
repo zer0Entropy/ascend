@@ -37,10 +37,12 @@ add_executable(ascend       src/main.cpp
                             src/resource/compositeTexture.cpp
                             src/resource/repeatingTexture.cpp
                             src/resource/font.cpp
+                            src/resource/music.cpp
                             src/resource/resourceMgr.cpp
                             src/scene/scene.cpp
                             src/scene/sceneMgr.cpp
                             src/scene/optionSelector.cpp
+                            src/scene/musicPlayer.cpp
                             src/interface/signal.cpp)
 
 #target_compile_options(ascend PRIVATE -fstandalone-debug)

@@ -3,6 +3,7 @@
 #include <SFML/Graphics/Rect.hpp>
 #include "menu.hpp"
 #include "optionSelector.hpp"
+#include "musicPlayer.hpp"
 #include "../component/boundingBox.hpp"
 #include "../component/sprite.hpp"
 #include "../component/text.hpp"
@@ -17,6 +18,7 @@ class Scene: public ISerializeable, public ILogMsgPublisher {
 public:
     struct Layer {
         enum class TypeID {
+            Music,
             Decoration,
             MenuButton,
             MenuLabel
@@ -32,10 +34,12 @@ public:
         std::vector<ResourceToken>          textures;
         std::vector<RepeatingTextureToken>  repeatingTextures;
         std::vector<CompositeTextureToken>  compositeTextures;
+        std::vector<ResourceToken>          musics;
 
         std::vector<sf::Rect<unsigned int>> boundingBoxes;
         std::vector<Resource*>              spriteAttachments;
         std::vector<Resource*>              textAttachments;
+        std::vector<Resource*>              musicAttachments;
         std::vector<std::string>            textContents;
         std::vector<Text::FontParameters>   fontParameters;
         std::vector<Alignment>              labelAlignments;
@@ -76,6 +80,8 @@ private:
     void                                    LoadTextureSwitches(const nlohmann::json& json, Layer& layer);
     void                                    LoadLabelAlignments(const nlohmann::json& json, Layer& layer);
 
+    void                                    InitMusicPlayer(Layer& layer);
+
     void                                    CreateDecorations(Layer& layer);
     void                                    CreateMenuButtons(Layer& layer);
     void                                    CreateMenuLabels(Layer& layer);
@@ -95,4 +101,6 @@ private:
 
     Menu                                    menu;
     MenuOptionSelector                      optionSelector;
+
+    MusicPlayer                             musicPlayer;
 };

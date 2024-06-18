@@ -65,7 +65,8 @@ public:
         SimpleTexture,
         RepeatingTexture,
         CompositeTexture,
-        TextFile
+        TextFile,
+        Music
     };
 
     Resource() = delete;
