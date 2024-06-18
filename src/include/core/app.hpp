@@ -9,6 +9,7 @@
 #include "log.hpp"
 #include "render.hpp"
 #include "inputHandler.hpp"
+#include "music.hpp"
 #include "../resource/resourceMgr.hpp"
 #include "../scene/sceneMgr.hpp"
 #include "../interface/signal.hpp"
@@ -36,6 +37,7 @@ public:
     InputSystem*                            GetInputSystem() const;
     RenderSystem*                           GetRenderSystem() const;
     EventSystem*                            GetEventSystem() const;
+    MusicSystem*                            GetMusicSystem() const;
 
     sf::RenderWindow&                       GetWindow() const;
 
@@ -67,6 +69,7 @@ private:
     std::unique_ptr<InputSystem>            inputSystem;
     std::unique_ptr<RenderSystem>           renderSystem;
     std::unique_ptr<EventSystem>            eventSystem;
+    std::unique_ptr<MusicSystem>            musicSystem;
 
     sf::RenderWindow                        window;
 };

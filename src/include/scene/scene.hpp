@@ -3,7 +3,6 @@
 #include <SFML/Graphics/Rect.hpp>
 #include "menu.hpp"
 #include "optionSelector.hpp"
-#include "musicPlayer.hpp"
 #include "../component/boundingBox.hpp"
 #include "../component/sprite.hpp"
 #include "../component/text.hpp"
@@ -79,8 +78,7 @@ private:
     void                                    LoadTexts(const nlohmann::json& json, Layer& layer);
     void                                    LoadTextureSwitches(const nlohmann::json& json, Layer& layer);
     void                                    LoadLabelAlignments(const nlohmann::json& json, Layer& layer);
-
-    void                                    InitMusicPlayer(Layer& layer);
+    void                                    LoadMusic(Layer& layer);
 
     void                                    CreateDecorations(Layer& layer);
     void                                    CreateMenuButtons(Layer& layer);
@@ -101,6 +99,4 @@ private:
 
     Menu                                    menu;
     MenuOptionSelector                      optionSelector;
-
-    MusicPlayer                             musicPlayer;
 };

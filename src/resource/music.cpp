@@ -10,6 +10,14 @@ Music::MusicStatus Music::GetStatus() const {
     return status;
 }
 
+float Music::GetVolume() const {
+    return music.getVolume();
+}
+
+void Music::SetVolume(float volume) {
+    music.setVolume(volume);
+}
+
 void Music::Play() {
     music.play();
     status = MusicStatus::Playing;

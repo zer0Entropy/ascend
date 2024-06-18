@@ -9,9 +9,10 @@ public:
         LogSystem,
         InputSystem,
         RenderSystem,
-        EventSystem
+        EventSystem,
+        MusicSystem
     };
     virtual SystemID    GetSystemID() const = 0;
 };
 
-constexpr int NumSystems{4};
+constexpr int NumSystems{5};

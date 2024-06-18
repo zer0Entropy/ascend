@@ -29,7 +29,7 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
         Layer& layer{layers[index]};
         switch(layer.typeID) {
             case Layer::TypeID::Music: {
-                InitMusicPlayer(layer);
+                LoadMusic(layer);
             } break;
             case Layer::TypeID::Decoration: {
                 CreateDecorations(layer);
@@ -501,7 +501,7 @@ void Scene::LoadLabelAlignments(const nlohmann::json& json, Layer& layer) {
     }
 }
 
-void Scene::InitMusicPlayer(Layer& layer) {
+void Scene::LoadMusic(Layer& layer) {
     /*  A Decoration layer has:
             A list of ResourceTokens {ResourceID, path} for loading Musics
             MusicPlayer parameters {bool, Attachments} for intializing the MusicPlayer
@@ -512,8 +512,9 @@ void Scene::InitMusicPlayer(Layer& layer) {
     const ResourceToken&         musicToken{*layer.musics.begin()};
     Music* music{resourceMgr.LoadMusic(musicToken.id, musicToken.path)};
     if(music) {
-        musicPlayer.Attach(music);
-        musicPlayer.Play();
+        MusicSystem& musicSystem{*Application::GetInstance().GetMusicSystem()};
+        musicSystem.SetMusic(musicToken.id);
+        musicSystem.Play();
     }
 }
 

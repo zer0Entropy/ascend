@@ -21,6 +21,7 @@ add_executable(ascend       src/main.cpp
                             src/core/inputHandler.cpp
                             src/core/log.cpp
                             src/core/render.cpp
+                            src/core/music.cpp
                             src/component/boundingBox.cpp
                             src/component/alignLabel.cpp
                             src/component/label.cpp
@@ -42,7 +43,6 @@ add_executable(ascend       src/main.cpp
                             src/scene/scene.cpp
                             src/scene/sceneMgr.cpp
                             src/scene/optionSelector.cpp
-                            src/scene/musicPlayer.cpp
                             src/interface/signal.cpp)
 
 #target_compile_options(ascend PRIVATE -fstandalone-debug)
