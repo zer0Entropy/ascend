@@ -2,6 +2,14 @@
 #include "../include/scene/sceneMgr.hpp"
 #include "../include/core/app.hpp"
 
+SceneMgr::SceneMgr(EntityMgr& entMgr, ResourceMgr &resMgr):
+    IEventSubscriber{},
+    IThrowSignal{},
+    entityMgr{entMgr},
+    resourceMgr{resMgr} {
+
+}
+
 void SceneMgr::HandleEvent(const Event& event) {
     if(event.GetTypeID() == Event::TypeID::QuitGameStarted) {
         this->ThrowSignal(SignalID::UserQuitGame);
@@ -21,13 +29,12 @@ std::unique_ptr<Scene> SceneMgr::Pop() {
     return                      std::move(scene);
 }
 
-void SceneMgr::Push(std::unique_ptr<Scene> scene) {
-    stack.push(std::move(scene));
+void SceneMgr::Push(const ResourceID& sceneDocID, std::string_view sceneDocPath) {
+    stack.push(std::make_unique<Scene>(entityMgr, resourceMgr));
 
-    std::string                 scenePath{"/home/zeroc00l/Code/ascend/data/scene/titleScene.json"};
-    nlohmann::json              sceneJSON;
-    std::ifstream               sceneFile{scenePath, std::ios_base::in};
-    sceneFile >> sceneJSON;
-    Scene*                      currentScene{GetCurrentScene()};
-    currentScene->LoadFromJSON(sceneJSON);
+    JSONDocument*               jsonDocument{resourceMgr.LoadJSONDocument(sceneDocID, sceneDocPath)};
+    if(jsonDocument) {
+        Scene*                      currentScene{GetCurrentScene()};
+        currentScene->LoadFromJSON(jsonDocument->GetJSON());
+    }
 }

@@ -66,6 +66,7 @@ public:
         RepeatingTexture,
         CompositeTexture,
         TextFile,
+        JSONDocument,
         Music,
         Sound
     };

@@ -51,6 +51,53 @@ Font* ResourceMgr::GetFont(const ResourceID& resourceID) {
     return nullptr;
 }
 
+JSONDocument* ResourceMgr::LoadJSONDocument(const ResourceID& resourceID, std::string_view resourcePath) {
+    auto result{
+        jsonDocMap.insert(std::make_pair(resourceID, std::make_unique<JSONDocument>(resourceID, resourcePath)))
+    };
+    if(result.second) {
+        std::string msg{"JSONDocument \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg);
+        return GetJSONDocument(resourceID);
+    }
+    else {
+        std::string errorMsg{"File not found: " + std::string{resourcePath} + "."};
+        this->PublishMsg(errorMsg, MsgPriorityID::Error);
+        std::string msg{"JSONDocument \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg, MsgPriorityID::Error);
+    }
+}
+
+void ResourceMgr::UnloadJSONDocument(const ResourceID& resourceID) {
+    const auto& iter{jsonDocMap.find(resourceID)};
+    if(iter != jsonDocMap.end()) {
+        iter->second.reset(nullptr);
+        jsonDocMap.erase(iter);
+        std::string msg{"JSONDoucment \"" + resourceID + "\" was successfully unloaded."};
+        this->PublishMsg(msg);
+    }
+    else {
+        std::string warnMsg{"Resource not found: " + resourceID + "."};
+        this->PublishMsg(warnMsg, MsgPriorityID::Warning);
+        std::string msg{"ResourceMgr received a request to unload the JSONDocument \"" + resourceID + "\", but it does not exist."};
+        this->PublishMsg(msg, MsgPriorityID::Warning);
+    }
+}
+
+JSONDocument* ResourceMgr::GetJSONDocument(const ResourceID& resourceID) {
+    const auto& iter{jsonDocMap.find(resourceID)};
+    if(iter != jsonDocMap.end()) {
+        return iter->second.get();
+    }
+    else {
+        std::string warnMsg{"Resource not found: " + resourceID + "."};
+        this->PublishMsg(warnMsg, MsgPriorityID::Warning);
+        std::string msg{"ResourceMgr received a request to retrieve the JSONDocument \"" + resourceID + "\", but it does not exist."};
+        this->PublishMsg(msg, MsgPriorityID::Warning);
+    }
+    return nullptr;
+}
+
 TextFile* ResourceMgr::LoadTextFile(const ResourceID& resourceID, std::string_view resourcePath, bool overwrite) {
     auto result{
         textFileMap.insert(std::make_pair(resourceID, std::make_unique<TextFile>(resourceID, resourcePath, overwrite)))

@@ -35,6 +35,7 @@ add_executable(ascend       src/main.cpp
                             src/component/scale.cpp
                             src/resource/resource.cpp
                             src/resource/textFile.cpp
+                            src/resource/jsonDocument.cpp
                             src/resource/texture.cpp
                             src/resource/compositeTexture.cpp
                             src/resource/repeatingTexture.cpp

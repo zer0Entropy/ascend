@@ -61,10 +61,12 @@ private:
 
     static Application*                     instance;
 
+    InputHandler                            inputHandler;
+
     EntityMgr                               entityMgr;
     ResourceMgr                             resourceMgr;
-    SceneMgr                                sceneMgr;
-    InputHandler                            inputHandler;
+    
+    std::unique_ptr<SceneMgr>               sceneMgr;
 
     std::array<ISystem*, NumSystems>        systemList;
     std::unique_ptr<LogSystem>              logSystem;

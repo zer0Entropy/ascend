@@ -91,11 +91,13 @@ void Application::Start() {
     systemList[(int)ISystem::SystemID::MusicSystem] = musicSystem.get();
     systemList[(int)ISystem::SystemID::SoundSystem] = soundSystem.get();
 
+    sceneMgr = std::make_unique<SceneMgr>(entityMgr, resourceMgr);
+
     logSystem->Subscribe(inputSystem.get());
-    eventSystem->Subscribe(&sceneMgr, Event::TypeID::NewGameStarted);
-    eventSystem->Subscribe(&sceneMgr, Event::TypeID::LoadGameStarted);
-    eventSystem->Subscribe(&sceneMgr, Event::TypeID::OptionsStarted);
-    eventSystem->Subscribe(&sceneMgr, Event::TypeID::QuitGameStarted);
+    eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::NewGameStarted);
+    eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::LoadGameStarted);
+    eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::OptionsStarted);
+    eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::QuitGameStarted);
 
     eventSystem->Subscribe(soundSystem.get(), Event::TypeID::ButtonPressCompleted);
 
@@ -113,7 +115,9 @@ void Application::Start() {
     std::string                 windowTitle{"ASCEND"};
     window.create(sf::VideoMode(windowSize.x, windowSize.y), windowTitle, sf::Style::Fullscreen);
 
-    sceneMgr.Push(std::make_unique<Scene>(entityMgr, resourceMgr));
+    ResourceID                  titleSceneJSONDocID{(ResourceID)"TitleSceneJSONDocument"};
+    std::string                 titleSceneJSONDocPath{"/home/zeroc00l/Code/ascend/data/scene/titleScene.json"};
+    sceneMgr->Push(titleSceneJSONDocID, titleSceneJSONDocPath);
 }
 
 void Application::Stop() {
@@ -126,6 +130,7 @@ void Application::Stop() {
     if(musicSystem) {
         musicSystem->Stop();
     }
+    sceneMgr.reset(nullptr);
     if(window.isOpen()) {
         window.close();
     }

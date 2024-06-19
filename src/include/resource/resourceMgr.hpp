@@ -3,6 +3,7 @@
 #include <memory>
 #include <unordered_map>
 #include "font.hpp"
+#include "jsonDocument.hpp"
 #include "textFile.hpp"
 #include "texture.hpp"
 #include "music.hpp"
@@ -15,6 +16,10 @@ public:
     Font*               LoadFont(const ResourceID& resourceID, std::string_view resourcePath);
     void                UnloadFont(const ResourceID& resourceID);
     Font*               GetFont(const ResourceID& resourceID);
+
+    JSONDocument*       LoadJSONDocument(const ResourceID& resourceID, std::string_view resourcePath);
+    void                UnloadJSONDocument(const ResourceID& resourceID);
+    JSONDocument*       GetJSONDocument(const ResourceID& resourceID);
 
     TextFile*           LoadTextFile(const ResourceID& resourceID, std::string_view resourcePath, bool overwrite = false);
     void                UnloadTextFile(const ResourceID& resourceID);
@@ -55,6 +60,7 @@ public:
 private:
     std::unordered_map<ResourceID, std::unique_ptr<Font>>               fontMap;
     std::unordered_map<ResourceID, std::unique_ptr<TextFile>>           textFileMap;
+    std::unordered_map<ResourceID, std::unique_ptr<JSONDocument>>       jsonDocMap;
     std::unordered_map<ResourceID, std::unique_ptr<Texture>>            textureMap;
     std::unordered_map<ResourceID, std::unique_ptr<Music>>              musicMap;
     std::unordered_map<ResourceID, std::unique_ptr<Sound>>              soundMap;
