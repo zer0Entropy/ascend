@@ -10,6 +10,7 @@
 #include "render.hpp"
 #include "inputHandler.hpp"
 #include "music.hpp"
+#include "sound.hpp"
 #include "../resource/resourceMgr.hpp"
 #include "../scene/sceneMgr.hpp"
 #include "../interface/signal.hpp"
@@ -38,6 +39,7 @@ public:
     RenderSystem*                           GetRenderSystem() const;
     EventSystem*                            GetEventSystem() const;
     MusicSystem*                            GetMusicSystem() const;
+    SoundSystem*                            GetSoundSystem() const;
 
     sf::RenderWindow&                       GetWindow() const;
 
@@ -70,6 +72,7 @@ private:
     std::unique_ptr<RenderSystem>           renderSystem;
     std::unique_ptr<EventSystem>            eventSystem;
     std::unique_ptr<MusicSystem>            musicSystem;
+    std::unique_ptr<SoundSystem>            soundSystem;
 
     sf::RenderWindow                        window;
 };

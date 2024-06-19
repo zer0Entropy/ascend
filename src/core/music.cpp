@@ -22,7 +22,7 @@ Music* MusicSystem::GetCurrentMusic() const {
 }
 
 void MusicSystem::SetMusic(const ResourceID& musicID) {
-    Music* music = resourceMgr.GetMusic(musicID);
+    Music* music{resourceMgr.GetMusic(musicID)};
     if(music) {
         Stop();
         currentMusic = music;

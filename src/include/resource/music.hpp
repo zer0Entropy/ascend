@@ -12,14 +12,13 @@ public:
         Paused,
         Stopped
     };
-    MusicStatus         GetStatus() const;
+    MusicStatus             GetStatus() const;
 
-    float               GetVolume() const;
-    void                SetVolume(float volume);
-    void                Play();
-    void                Pause();
-    void                Stop();
+    float                   GetVolume() const;
+    void                    SetVolume(float volume);
+    void                    Play();
+    void                    Pause();
+    void                    Stop();
 private:
-    sf::Music           music;
-    MusicStatus         status;
+    sf::Music               music;
 };

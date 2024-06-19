@@ -6,6 +6,7 @@
 #include "textFile.hpp"
 #include "texture.hpp"
 #include "music.hpp"
+#include "sound.hpp"
 #include "../core/common.hpp"
 #include "../interface/publisher.hpp"
 
@@ -47,9 +48,14 @@ public:
     void                UnloadMusic(const ResourceID& resourceID);
     Music*              GetMusic(const ResourceID& resourceID);
 
+    Sound*              LoadSound(const ResourceID& resourceID, std::string_view resourcePath);
+    void                UnloadSound(const ResourceID& resourceID);
+    Sound*              GetSound(const ResourceID& resourceID);
+
 private:
     std::unordered_map<ResourceID, std::unique_ptr<Font>>               fontMap;
     std::unordered_map<ResourceID, std::unique_ptr<TextFile>>           textFileMap;
     std::unordered_map<ResourceID, std::unique_ptr<Texture>>            textureMap;
     std::unordered_map<ResourceID, std::unique_ptr<Music>>              musicMap;
+    std::unordered_map<ResourceID, std::unique_ptr<Sound>>              soundMap;
 };

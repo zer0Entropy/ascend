@@ -30,6 +30,10 @@ MusicSystem* Application::GetMusicSystem() const {
     return musicSystem.get();
 }
 
+SoundSystem* Application::GetSoundSystem() const {
+    return soundSystem.get();
+}
+
 sf::RenderWindow& Application::GetWindow() const {
     return const_cast<sf::RenderWindow&>(window);
 }
@@ -79,11 +83,13 @@ void Application::Start() {
     renderSystem = std::make_unique<RenderSystem>(window);
     eventSystem = std::make_unique<EventSystem>();
     musicSystem = std::make_unique<MusicSystem>(resourceMgr);
+    soundSystem = std::make_unique<SoundSystem>(resourceMgr);
     systemList[(int)ISystem::SystemID::LogSystem] = logSystem.get();
     systemList[(int)ISystem::SystemID::InputSystem] = inputSystem.get();
     systemList[(int)ISystem::SystemID::RenderSystem] = renderSystem.get();
     systemList[(int)ISystem::SystemID::EventSystem] = eventSystem.get();
     systemList[(int)ISystem::SystemID::MusicSystem] = musicSystem.get();
+    systemList[(int)ISystem::SystemID::SoundSystem] = soundSystem.get();
 
     logSystem->Subscribe(inputSystem.get());
     eventSystem->Subscribe(&sceneMgr, Event::TypeID::NewGameStarted);

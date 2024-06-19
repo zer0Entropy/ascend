@@ -70,7 +70,7 @@ TextFile* ResourceMgr::LoadTextFile(const ResourceID& resourceID, std::string_vi
 }
 
 void ResourceMgr::UnloadTextFile(const ResourceID& resourceID) {
-    auto iter{textFileMap.find(resourceID)};
+    const auto& iter{textFileMap.find(resourceID)};
     if(iter != textFileMap.end()) {
         iter->second.reset(nullptr);
         textFileMap.erase(iter);
@@ -86,7 +86,7 @@ void ResourceMgr::UnloadTextFile(const ResourceID& resourceID) {
 }
 
 TextFile* ResourceMgr::GetTextFile(const ResourceID& resourceID) {
-    auto iter{textFileMap.find(resourceID)};
+    const auto& iter{textFileMap.find(resourceID)};
     if(iter != textFileMap.end()) {
         return iter->second.get();
     }
@@ -181,7 +181,7 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
 }
 
 void ResourceMgr::UnloadTexture(const ResourceID& resourceID) {
-    auto iter{textureMap.find(resourceID)};
+    const auto& iter{textureMap.find(resourceID)};
     if(iter != textureMap.end()) {
         iter->second.reset(nullptr);
         textureMap.erase(iter);
@@ -197,7 +197,7 @@ void ResourceMgr::UnloadTexture(const ResourceID& resourceID) {
 }
 
 Texture* ResourceMgr::GetTexture(const ResourceID& resourceID) {
-    auto iter{textureMap.find(resourceID)};
+    const auto& iter{textureMap.find(resourceID)};
     if(iter != textureMap.end()) {
         return iter->second.get();
     }
@@ -223,7 +223,7 @@ Music* ResourceMgr::LoadMusic(const ResourceID& resourceID, std::string_view res
 }
 
 void ResourceMgr::UnloadMusic(const ResourceID& resourceID) {
-    auto iter{musicMap.find(resourceID)};
+    const auto& iter{musicMap.find(resourceID)};
     if(iter != musicMap.end()) {
         iter->second.reset(nullptr);
         musicMap.erase(iter);
@@ -239,7 +239,7 @@ void ResourceMgr::UnloadMusic(const ResourceID& resourceID) {
 }
 
 Music* ResourceMgr::GetMusic(const ResourceID& resourceID) {
-    auto iter{musicMap.find(resourceID)};
+    const auto& iter{musicMap.find(resourceID)};
     if(iter != musicMap.end()) {
         return iter->second.get();
     }
@@ -247,6 +247,48 @@ Music* ResourceMgr::GetMusic(const ResourceID& resourceID) {
         std::string warnMsg{"Resource not found: " + resourceID + "."};
         this->PublishMsg(warnMsg, MsgPriorityID::Warning);
         std::string msg{"ResourceMgr received a request to retrieve the Music \"" + resourceID + "\", but it does not exist."};
+        this->PublishMsg(msg, MsgPriorityID::Warning);
+    }
+    return nullptr;
+}
+
+Sound* ResourceMgr::LoadSound(const ResourceID& resourceID, std::string_view resourcePath) {
+    auto result{
+        soundMap.insert(std::make_pair(resourceID, std::make_unique<Sound>(resourceID, resourcePath)))
+    };
+    if(result.second) {
+        std::string msg{"Sound \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg);
+        return GetSound(resourceID);
+    }
+    return nullptr;
+}
+
+void  ResourceMgr::UnloadSound(const ResourceID& resourceID) {
+    const auto& iter{soundMap.find(resourceID)};
+    if(iter != soundMap.end()) {
+        iter->second.reset(nullptr);
+        soundMap.erase(iter);
+        std::string msg{"Sound \"" + resourceID + "\" was successfully unloaded."};
+        this->PublishMsg(msg);
+    }
+    else {
+        std::string warnMsg{"Resource not found: " + resourceID + "."};
+        this->PublishMsg(warnMsg, MsgPriorityID::Warning);
+        std::string msg{"ResourceMgr received a request to unload the Sound \"" + resourceID + "\", but it does not exist."};
+        this->PublishMsg(msg, MsgPriorityID::Warning);
+    }
+}
+
+Sound* ResourceMgr::GetSound(const ResourceID& resourceID) {
+    const auto& iter{soundMap.find(resourceID)};
+    if(iter != soundMap.end()) {
+        return iter->second.get();
+    }
+    else {
+        std::string warnMsg{"Resource not found: " + resourceID + "."};
+        this->PublishMsg(warnMsg, MsgPriorityID::Warning);
+        std::string msg{"ResourceMgr received a request to retrieve the Sound \"" + resourceID + "\", but it does not exist."};
         this->PublishMsg(msg, MsgPriorityID::Warning);
     }
     return nullptr;

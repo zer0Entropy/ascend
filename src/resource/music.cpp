@@ -1,13 +1,20 @@
 #include "../include/resource/music.hpp"
 
 Music::Music(const ResourceID& resourceID, std::string_view resourcePath):
-    Resource{resourceID, Resource::TypeID::Music, resourcePath},
-    status{MusicStatus::Stopped} {
+    Resource{resourceID, Resource::TypeID::Music, resourcePath} {
     music.openFromFile(this->GetPath());
+    music.setLoop(true);
 }
 
 Music::MusicStatus Music::GetStatus() const {
-    return status;
+    sf::SoundSource::Status internalState{music.getStatus()};
+    if(internalState == sf::SoundSource::Status::Playing) {
+        return MusicStatus::Playing;
+    }
+    else if(internalState == sf::SoundSource::Status::Paused) {
+        return MusicStatus::Paused;
+    }
+    return MusicStatus::Stopped;
 }
 
 float Music::GetVolume() const {
@@ -20,15 +27,12 @@ void Music::SetVolume(float volume) {
 
 void Music::Play() {
     music.play();
-    status = MusicStatus::Playing;
 }
 
 void Music::Pause() {
     music.pause();
-    status = MusicStatus::Paused;
 }
 
 void Music::Stop() {
     music.stop();
-    status = MusicStatus::Stopped;
 }

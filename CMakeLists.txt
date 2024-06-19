@@ -22,6 +22,7 @@ add_executable(ascend       src/main.cpp
                             src/core/log.cpp
                             src/core/render.cpp
                             src/core/music.cpp
+                            src/core/sound.cpp
                             src/component/boundingBox.cpp
                             src/component/alignLabel.cpp
                             src/component/label.cpp
@@ -39,6 +40,7 @@ add_executable(ascend       src/main.cpp
                             src/resource/repeatingTexture.cpp
                             src/resource/font.cpp
                             src/resource/music.cpp
+                            src/resource/sound.cpp
                             src/resource/resourceMgr.cpp
                             src/scene/scene.cpp
                             src/scene/sceneMgr.cpp
