@@ -14,6 +14,7 @@ public:
     };
     MusicStatus             GetStatus() const;
 
+    void                    SetLoop(bool loop);
     float                   GetVolume() const;
     void                    SetVolume(float volume);
     void                    Play();

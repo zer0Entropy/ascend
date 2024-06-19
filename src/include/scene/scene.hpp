@@ -34,6 +34,7 @@ public:
         std::vector<RepeatingTextureToken>  repeatingTextures;
         std::vector<CompositeTextureToken>  compositeTextures;
         std::vector<ResourceToken>          musics;
+        std::vector<ResourceToken>          sounds;
 
         std::vector<sf::Rect<unsigned int>> boundingBoxes;
         std::vector<Resource*>              spriteAttachments;
@@ -72,13 +73,26 @@ private:
     Layer*                                  GetLayer(std::string_view name);
     void                                    LoadLayerIndex(const nlohmann::json& json);
     void                                    LoadLayer(const nlohmann::json& json);
-    void                                    LoadResources(const nlohmann::json& json, Layer& layer);
+
+    void                                    LoadResourcesJSON(const nlohmann::json& json, Layer& layer);
+    void                                    LoadFontsJSON(const nlohmann::json& json, Layer& layer);
+    void                                    LoadTexturesJSON(const nlohmann::json& json, Layer& layer);
+    void                                    LoadMusicsJSON(const nlohmann::json& json, Layer& layer);
+    void                                    LoadSoundsJSON(const nlohmann::json& json, Layer& layer);
+    
+    sf::IntRect                             LoadRectFromJSON(const nlohmann::json& json) const;
+    void                                    LoadSimpleTextureJSON(const nlohmann::json& json, Layer& layer);
+    void                                    LoadCompositeTextureJSON(const nlohmann::json& json, Layer& layer);
+    void                                    LoadRepeatingTextureJSON(const nlohmann::json& json, Layer& layer);
+
+    void                                    LoadResources(Layer& layer);
     void                                    LoadBoundingBoxes(const nlohmann::json& json, Layer& layer);
     void                                    LoadSprites(const nlohmann::json& json, Layer& layer);
     void                                    LoadTexts(const nlohmann::json& json, Layer& layer);
     void                                    LoadTextureSwitches(const nlohmann::json& json, Layer& layer);
     void                                    LoadLabelAlignments(const nlohmann::json& json, Layer& layer);
-    void                                    LoadMusic(Layer& layer);
+    void                                    LoadMusic(const nlohmann::json& json, Layer& layer);
+    void                                    LoadSoundEffects(Layer& layer);
 
     void                                    CreateDecorations(Layer& layer);
     void                                    CreateMenuButtons(Layer& layer);

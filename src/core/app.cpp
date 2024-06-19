@@ -83,7 +83,7 @@ void Application::Start() {
     renderSystem = std::make_unique<RenderSystem>(window);
     eventSystem = std::make_unique<EventSystem>();
     musicSystem = std::make_unique<MusicSystem>(resourceMgr);
-    soundSystem = std::make_unique<SoundSystem>(resourceMgr);
+    soundSystem = std::make_unique<SoundSystem>(resourceMgr, *eventSystem.get());
     systemList[(int)ISystem::SystemID::LogSystem] = logSystem.get();
     systemList[(int)ISystem::SystemID::InputSystem] = inputSystem.get();
     systemList[(int)ISystem::SystemID::RenderSystem] = renderSystem.get();
@@ -96,6 +96,8 @@ void Application::Start() {
     eventSystem->Subscribe(&sceneMgr, Event::TypeID::LoadGameStarted);
     eventSystem->Subscribe(&sceneMgr, Event::TypeID::OptionsStarted);
     eventSystem->Subscribe(&sceneMgr, Event::TypeID::QuitGameStarted);
+
+    eventSystem->Subscribe(soundSystem.get(), Event::TypeID::ButtonPressCompleted);
 
     ResourceID                  logFileID{"LogTextFile"};
     std::string                 logPath{"/home/zeroc00l/Code/ascend/data/log.txt"};
@@ -118,12 +120,20 @@ void Application::Stop() {
     if(logSystem) {
         logSystem->Update();
     }
+    if(soundSystem) {
+        soundSystem->Stop();
+    }
+    if(musicSystem) {
+        musicSystem->Stop();
+    }
     if(window.isOpen()) {
         window.close();
     }
     for(int index = 0; index < NumSystems; ++index) {
         systemList[index] = nullptr;
     }
+    soundSystem.reset(nullptr);
+    musicSystem.reset(nullptr);
     eventSystem.reset(nullptr);
     renderSystem.reset(nullptr);
     inputSystem.reset(nullptr);

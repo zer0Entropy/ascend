@@ -17,6 +17,10 @@ Music::MusicStatus Music::GetStatus() const {
     return MusicStatus::Stopped;
 }
 
+void Music::SetLoop(bool loop) {
+    music.setLoop(loop);
+}
+
 float Music::GetVolume() const {
     return music.getVolume();
 }

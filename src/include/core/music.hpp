@@ -18,6 +18,7 @@ public:
     void            SetMusic(const ResourceID& musicID);
     void            Reset();
 
+    void            SetLoop(bool loop);
     void            SetVolume(float vol);
     float           GetVolume() const;
 

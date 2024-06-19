@@ -37,6 +37,12 @@ void MusicSystem::Reset() {
     }
 }
 
+void MusicSystem::SetLoop(bool loop) {
+    if(currentMusic) {
+        currentMusic->SetLoop(loop);
+    }
+}
+
 void MusicSystem::SetVolume(float vol) {
     volume = vol;
     if(currentMusic) {

@@ -11,6 +11,20 @@ public:
         Composite
     };
 
+    constexpr static Style  GetStyle(const std::string& name) {
+        Style output{Style::Simple};
+        if(name.compare("simple") == 0) {
+            output = Texture::Style::Simple;
+        }
+        else if(name.compare("repeating") == 0) {
+            output = Texture::Style::Repeating;
+        }
+        else if(name.compare("composite") == 0) {
+            output = Texture::Style::Composite;
+        }
+        return output;
+    }
+
     Texture() = delete;
     Texture(                const ResourceID& resID,
                             std::string_view resPath,
