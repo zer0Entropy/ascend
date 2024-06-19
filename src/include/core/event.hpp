@@ -37,6 +37,17 @@ public:
         "QuitGameStarted"sv
     };
 
+    static constexpr TypeID GetTypeID(std::string_view name) {
+        TypeID              output{TypeID::QuitGameStarted};
+        for(unsigned int index = 0; index < NumEventTypes; ++index) {
+            if(name.compare(TypeNames[index]) == 0) {
+                output = (TypeID)index;
+                break;
+            }
+        }
+        return output;
+    }
+
     Event(TypeID type, Entity targetEnt);
 
     void                    LoadFromJSON(const nlohmann::json& json);

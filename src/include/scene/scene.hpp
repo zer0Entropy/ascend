@@ -92,7 +92,7 @@ private:
     void                                    LoadTextureSwitches(const nlohmann::json& json, Layer& layer);
     void                                    LoadLabelAlignments(const nlohmann::json& json, Layer& layer);
     void                                    LoadMusic(const nlohmann::json& json, Layer& layer);
-    void                                    LoadSoundEffects(Layer& layer);
+    void                                    LoadSoundEffects(const nlohmann::json& json, Layer& layer);
 
     void                                    CreateDecorations(Layer& layer);
     void                                    CreateMenuButtons(Layer& layer);

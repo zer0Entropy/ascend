@@ -152,6 +152,7 @@ void Scene::LoadLayer(const nlohmann::json& json) {
             const auto&             findTexts{json.find("texts")};
             const auto&             findTextureSwitches{json.find("textureSwitches")};
             const auto&             findAlignLabels{json.find("alignLabels")};
+            const auto&             findSoundEffects{json.find("soundEffects")};
 
             if(findResources != json.end()) {
                 const auto&         resourcesJSON{findResources.value()};
@@ -182,6 +183,10 @@ void Scene::LoadLayer(const nlohmann::json& json) {
             if(findMusic != json.end()) {
                 const auto&         musicJSON{findMusic.value()};
                 LoadMusic(musicJSON, layer);
+            }
+            if(findSoundEffects != json.end()) {
+                const auto&         soundEffectsJSON{findSoundEffects.value()};
+                LoadSoundEffects(soundEffectsJSON, layer);
             }
         }
     }   
@@ -580,7 +585,21 @@ void Scene::LoadMusic(const nlohmann::json& json, Layer& layer) {
         MusicSystem& musicSystem{*Application::GetInstance().GetMusicSystem()};
         musicSystem.SetMusic(musicToken.id);
         musicSystem.SetLoop(loop);
-        //musicSystem.Play();
+        musicSystem.Play();
+    }
+}
+
+void Scene::LoadSoundEffects(const nlohmann::json& json, Layer& layer) {
+    SoundSystem&            soundSystem{*Application::GetInstance().GetSoundSystem()};
+    for(const auto& soundEffect : json) {
+        const auto&         findTriggerEvent{soundEffect.find("triggerEvent")};
+        const auto&         findSoundID{soundEffect.find("soundID")};
+        if(     findTriggerEvent != soundEffect.end()
+            &&  findSoundID != soundEffect.end()) {
+            std::string     triggerEventName{findTriggerEvent.value().template get<std::string>()};
+            ResourceID      soundID{(ResourceID)findSoundID.value().template get<std::string>()};
+            soundSystem.AddSoundEffect(SoundEffectToken{Event::GetTypeID(triggerEventName), soundID});
+        }
     }
 }
 
