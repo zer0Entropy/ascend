@@ -98,6 +98,7 @@ private:
     void                                    CreateMenuButtons(Layer& layer);
     void                                    CreateMenuLabels(Layer& layer);
 
+    Entity                                  FindWidgetUnderCursor() const;
 
     SpriteMgr                               spriteMgr;
     TextMgr                                 textMgr;

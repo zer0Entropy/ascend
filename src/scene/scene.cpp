@@ -87,7 +87,14 @@ void Scene::SetSelectedMenuOption(int index) {
 
 void Scene::ConfirmSelectedMenuOption() {
     if(!menu.selectedOption) {
-        return;
+        Entity      widgetUnderCursor{FindWidgetUnderCursor()};
+        if((int)widgetUnderCursor > 0) {
+            unsigned int menuIndex = (int)widgetUnderCursor - (int)menu.options.at(0).widget;
+            menu.selectedOption = &menu.options.at(menuIndex);
+        }
+        else {
+            return;
+        }
     }
     auto& eventSystem{*Application::GetInstance().GetEventSystem()};
     MenuOption& selection{*menu.selectedOption};
@@ -744,3 +751,12 @@ void Scene::CreateMenuLabels(Layer& layer) {
     }
 }
 
+Entity Scene::FindWidgetUnderCursor() const {
+    const auto&     boundingBoxList{boundingBoxMgr.GetList()};
+    for(const auto& boundingBox : boundingBoxList) {
+        if(IsInBounds((sf::Vector2<unsigned int>)sf::Mouse::getPosition(), boundingBox->GetRect())) {
+            return boundingBox->GetOwner();
+        }
+    }
+    return (Entity)-1;
+}
