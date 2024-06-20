@@ -9,6 +9,7 @@ public:
         BoundingBox,
         Sprite,
         Text,
+        RenderLayer,
         Renderable,
         ScaleRenderable,
         Label,
@@ -19,7 +20,7 @@ public:
     };
 
     Component(TypeID cType, Entity cOwner):
-        typeID{cType}, owner{cOwner} {}
+        typeID{cType}, owner{cOwner}, enabled{true} {}
 
     auto    GetTypeID() const   ->  TypeID  {return typeID;}
     [[nodiscard]]

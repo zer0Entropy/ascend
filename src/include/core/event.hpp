@@ -4,6 +4,7 @@
 #include <queue>
 #include <string_view>
 #include "../core/entity.hpp"
+#include "../interface/publisher.hpp"
 #include "../interface/subscriber.hpp"
 #include "../interface/serialize.hpp"
 #include "../interface/system.hpp"
@@ -61,7 +62,7 @@ private:
     Entity                  target;
 };
 
-class EventSystem: public ISystem {
+class EventSystem: public ISystem, public ILogMsgPublisher {
 public:
     EventSystem();
 
@@ -71,6 +72,7 @@ public:
     void                                Enqueue(const Event& event);
     void                                Subscribe(IEventSubscriber* subscriber, Event::TypeID eventType);
     void                                Unsubscribe(IEventSubscriber* subscriber, Event::TypeID eventType);
+    void                                UnsubscribeAll(IEventSubscriber* subscriber);
 private:
     std::queue<Event>                                                   queue;
     std::array<std::vector<IEventSubscriber*>, Event::NumEventTypes>    subscribers;

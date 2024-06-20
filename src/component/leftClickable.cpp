@@ -77,7 +77,7 @@ void LeftClickableMgr::Remove(Entity owner) {
 
 LeftClickable* LeftClickableMgr::Get(Entity owner) {
     const auto& iter{lClickMap.find(owner)};
-    if(iter != lClickMap.end()) {
+    if(iter != lClickMap.end() && (*iter).second->IsEnabled()) {
         return iter->second.get();
     }
     return nullptr;
@@ -86,7 +86,9 @@ LeftClickable* LeftClickableMgr::Get(Entity owner) {
 std::vector<LeftClickable*> LeftClickableMgr::GetList() const {
     std::vector<LeftClickable*> lClickList;
     for(const auto& leftClickable : lClickMap) {
-        lClickList.push_back(leftClickable.second.get());
+        if(leftClickable.second->IsEnabled()) {
+            lClickList.push_back(leftClickable.second.get());
+        }
     }
     return lClickList;
 }

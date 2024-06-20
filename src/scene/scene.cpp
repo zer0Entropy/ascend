@@ -1,9 +1,10 @@
 #include "../include/scene/scene.hpp"
 #include "../include/core/app.hpp"
 
-Scene::Scene(EntityMgr& entMgr, ResourceMgr& resMgr):
+Scene::Scene(int scnIndex, EntityMgr& entMgr, ResourceMgr& resMgr):
     ISerializeable{},
     ILogMsgPublisher{},
+    sceneIndex{scnIndex},
     entityMgr{entMgr},
     resourceMgr{resMgr},
     optionSelector{this} {
@@ -119,6 +120,10 @@ LeftClickableMgr& Scene::GetLeftClickableMgr() const {
     return const_cast<LeftClickableMgr&>(leftClickableMgr);
 }
 
+MenuOptionSelector& Scene::GetOptionSelector() const {
+    return const_cast<MenuOptionSelector&>(optionSelector);
+}
+
 const Menu& Scene::GetMenu() const {
     return menu;
 }
@@ -133,6 +138,9 @@ void Scene::SetSelectedMenuOption(int index) {
 }
 
 void Scene::ConfirmSelectedMenuOption() {
+    if(menu.options.empty()) {
+        return;
+    }
     if(!menu.selectedOption) {
         Entity      widgetUnderCursor{FindWidgetUnderCursor()};
         if((int)widgetUnderCursor > 0) {
@@ -204,10 +212,11 @@ void Scene::CreateDecorations(Layer& layer) {
         }
         index++;
     }
+    auto& renderLayerMgr{Application::GetInstance().GetRenderSystem()->GetRenderLayerMgr()};
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     for(int entityIndex = firstEntity; entityIndex < firstEntity + layer.entities.size(); ++entityIndex) {
-        renderableMgr.Add(  layer.index,
-                            (Entity)entityIndex,
+        renderLayerMgr.Add((sceneIndex * 100) + layer.index,(Entity)entityIndex);
+        renderableMgr.Add(  (Entity)entityIndex,
                             *boundingBoxMgr.Get(entityIndex),
                             *spriteMgr.Get(entityIndex));
     }
@@ -267,10 +276,11 @@ void Scene::CreateMenuButtons(Layer& layer) {
             eventSystem.Subscribe(&textureSwitcher, textureSwitch.first);
         }
     }
+    auto& renderLayerMgr{Application::GetInstance().GetRenderSystem()->GetRenderLayerMgr()};
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     for(int entityIndex = (int)firstEntity; entityIndex < (int)firstEntity + layer.entities.size(); ++entityIndex) {
-        renderableMgr.Add(  layer.index,
-                            (Entity)entityIndex,
+        renderLayerMgr.Add((sceneIndex * 100) + layer.index,(Entity)entityIndex);
+        renderableMgr.Add(  (Entity)entityIndex,
                             *boundingBoxMgr.Get(entityIndex),
                             *spriteMgr.Get(entityIndex));
     }

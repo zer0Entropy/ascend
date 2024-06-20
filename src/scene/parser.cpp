@@ -19,7 +19,6 @@ std::vector<std::string> SceneParser::LoadLayerIndex() {
 }
 
 std::vector<Layer> SceneParser::LoadLayers() {
-    std::vector<Layer>              layerList;
     const auto&                     findLayers(sceneJSON.find("layers"));
     if(findLayers != sceneJSON.end()) {
         layersJSON =                findLayers.value();
@@ -28,8 +27,8 @@ std::vector<Layer> SceneParser::LoadLayers() {
         }
     }
     const auto                  layerNames{LoadLayerIndex()};
+    std::vector<Layer>          layerList;
     for(int index = 0; index < layerJSONList.size(); ++index) {
-        layerList.push_back(Layer{});
         Layer&                  layer{*layerList.insert(layerList.end(), Layer{})};
         layer.index =           index;
         layer.name =            layerNames.at(index);
@@ -171,6 +170,32 @@ std::vector<ResourceToken> SceneParser::LoadTextures(const nlohmann::json& json)
                             Resource::TypeID::RepeatingTexture,
                             ResourceToken::TextureParams{
                                 findRepeatHorizontal.value(),
+                                findRepeatVertical.value(),
+                                sourceRect
+                            }
+                        });
+                }
+                else if(findRepeatHorizontal != textureJSON.end()) {
+                    textureList.push_back(
+                        ResourceToken{
+                            findID.value().template get<std::string>(),
+                            findPath.value().template get<std::string>(),
+                            Resource::TypeID::RepeatingTexture,
+                            ResourceToken::TextureParams{
+                                findRepeatHorizontal.value(),
+                                0,
+                                sourceRect
+                            }
+                        });
+                }
+                else if(findRepeatVertical != textureJSON.end()) {
+                    textureList.push_back(
+                        ResourceToken{
+                            findID.value().template get<std::string>(),
+                            findPath.value().template get<std::string>(),
+                            Resource::TypeID::RepeatingTexture,
+                            ResourceToken::TextureParams{
+                                0,
                                 findRepeatVertical.value(),
                                 sourceRect
                             }

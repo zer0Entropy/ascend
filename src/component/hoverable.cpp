@@ -63,7 +63,7 @@ void HoverableMgr::Remove(Entity owner) {
 
 Hoverable* HoverableMgr::Get(Entity owner) {
     const auto& iter{hoverableMap.find(owner)};
-    if(iter != hoverableMap.end()) {
+    if(iter != hoverableMap.end() && (*iter).second->IsEnabled()) {
         return iter->second.get();
     }
     return nullptr;
@@ -72,7 +72,9 @@ Hoverable* HoverableMgr::Get(Entity owner) {
 std::vector<Hoverable*> HoverableMgr::GetList() const {
     std::vector<Hoverable*> hoverableList;
     for(const auto& hoverable : hoverableMap) {
-        hoverableList.push_back(hoverable.second.get());
+        if(hoverable.second->IsEnabled()) {
+            hoverableList.push_back(hoverable.second.get());
+        }
     }
     return hoverableList;
 }

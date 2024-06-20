@@ -1,6 +1,7 @@
 #pragma once
 
 #include <SFML/Graphics/RenderWindow.hpp>
+#include "../component/renderLayer.hpp"
 #include "../component/renderable.hpp"
 #include "../component/label.hpp"
 #include "../component/alignLabel.hpp"
@@ -14,6 +15,7 @@ public:
     void                                        Update() override;
     ISystem::SystemID                           GetSystemID() const override;
 
+    RenderLayerMgr&                             GetRenderLayerMgr() const;
     RenderableMgr&                              GetRenderableMgr() const;
     LabelMgr&                                   GetLabelMgr() const;
     AlignLabelMgr&                              GetAlignLabelMgr() const;
@@ -21,6 +23,7 @@ public:
 
 private:
     sf::RenderWindow&                           window;
+    RenderLayerMgr                              renderLayerMgr;
     RenderableMgr                               renderableMgr;
     LabelMgr                                    labelMgr;
     AlignLabelMgr                               alignLabelMgr;

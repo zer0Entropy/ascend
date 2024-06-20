@@ -24,7 +24,8 @@ Entity Event::GetTarget() const {
 }
 
 EventSystem::EventSystem():
-    ISystem{} {
+    ISystem{},
+    ILogMsgPublisher{} {
 
 }
 
@@ -50,6 +51,10 @@ void EventSystem::Enqueue(const Event& event) {
 void EventSystem::Subscribe(IEventSubscriber* subscriber, Event::TypeID eventType) {
     auto& subscriberList{subscribers[(int)eventType]};
     subscriberList.push_back(subscriber);
+    std::string msg{"Added subscriber to EventType \""};
+    msg.append(Event::TypeNames.at((int)eventType));
+    msg.append("\".");
+    this->PublishMsg(msg);
 }
 
 void EventSystem::Unsubscribe(IEventSubscriber* subscriber, Event::TypeID eventType) {
@@ -57,7 +62,17 @@ void EventSystem::Unsubscribe(IEventSubscriber* subscriber, Event::TypeID eventT
     for(auto iter = subscriberList.begin(); iter != subscriberList.end(); ++iter) {
         if((*iter) == subscriber) {
             subscriberList.erase(iter);
+            std::string msg{"Removed subscriber from EventType \""};
+            msg.append(Event::TypeNames.at((int)eventType));
+            msg.append("\".");
+            this->PublishMsg(msg);
             break;
         }
+    }
+}
+
+void EventSystem::UnsubscribeAll(IEventSubscriber* subscriber) {
+    for(int index = 0; index < Event::NumEventTypes; ++index) {
+        Unsubscribe(subscriber, (Event::TypeID)index);
     }
 }

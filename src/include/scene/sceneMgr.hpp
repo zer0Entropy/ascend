@@ -16,6 +16,8 @@ public:
 
     Scene*                                  GetCurrentScene() const;
 
+    void                                    PauseCurrentScene();
+
     std::unique_ptr<Scene>                  Pop();
     void                                    Push(const ResourceID& sceneDocID, std::string_view sceneDocPath);
 private:

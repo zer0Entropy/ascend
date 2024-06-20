@@ -78,7 +78,7 @@ void TextureSwitcherMgr::Remove(Entity owner) {
 
 TextureSwitcher* TextureSwitcherMgr::Get(Entity owner) {
     const auto& iter{textureSwitcherMap.find(owner)};
-    if(iter != textureSwitcherMap.end()) {
+    if(iter != textureSwitcherMap.end() && (*iter).second->IsEnabled()) {
         return iter->second.get();
     }
     return nullptr;
@@ -87,7 +87,9 @@ TextureSwitcher* TextureSwitcherMgr::Get(Entity owner) {
 std::vector<TextureSwitcher*> TextureSwitcherMgr::GetList() const {
     std::vector<TextureSwitcher*> textureSwitcherList;
     for(const auto& textureSwitcher : textureSwitcherMap) {
-        textureSwitcherList.push_back(textureSwitcher.second.get());
+        if(textureSwitcher.second->IsEnabled()) {
+            textureSwitcherList.push_back(textureSwitcher.second.get());
+        }
     }
     return textureSwitcherList;
 }

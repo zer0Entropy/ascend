@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "../include/core/render.hpp"
 
 RenderSystem::RenderSystem(sf::RenderWindow& win):
@@ -7,26 +8,29 @@ RenderSystem::RenderSystem(sf::RenderWindow& win):
 }
 
 void RenderSystem::Update() {
-    const auto renderableList{renderableMgr.GetList()};
+    std::vector<std::pair<int, sf::Drawable*>>      renderList;
+    const auto                                      renderableList{renderableMgr.GetList()};
     for(const auto& renderable : renderableList) {
-        const auto& bounds{renderable->GetBounds()};
+        const auto&                                 bounds{renderable->GetBounds()};
         auto& sprite{renderable->GetSprite()};
+        sf::Sprite&                                 sfmlSprite{sprite.GetSprite()};
         auto scaleRenderable{scaleRenderableMgr.Get(sprite.GetOwner())};
         if(scaleRenderable) {
-            const auto& scaleFactor{scaleRenderable->GetScalingFactor()};
-            sprite.GetSprite().setScale(scaleFactor.x, scaleFactor.y);
+            const auto&                             scaleFactor{scaleRenderable->GetScalingFactor()};
+            sfmlSprite.setScale(scaleFactor.x, scaleFactor.y);
         }
-        sprite.GetSprite().setPosition(bounds.GetLeft(), bounds.GetTop());
-        window.draw(sprite.GetSprite());
+        sfmlSprite.setPosition(bounds.GetLeft(), bounds.GetTop());
+        const auto&                                 renderLayer{renderLayerMgr.Get(sprite.GetOwner())};
+        renderList.push_back(std::make_pair(renderLayer->GetLayerIndex(), &sfmlSprite));
     }
-    const auto labelList{labelMgr.GetList()};
+    const auto                                      labelList{labelMgr.GetList()};
     for(const auto& label : labelList) {
-        const auto& bounds{label->GetBounds()};
-        const auto& boundingBox{bounds.GetRect()};
-        auto& text{label->GetText()};
-        auto alignLabel{alignLabelMgr.Get(label->GetOwner())};
-        sf::Text& sfmlText{text.GetText()};
-        const sf::Vector2u textSize{
+        const auto&                                 bounds{label->GetBounds()};
+        const auto&                                 boundingBox{bounds.GetRect()};
+        auto&                                       text{label->GetText()};
+        auto                                        alignLabel{alignLabelMgr.Get(label->GetOwner())};
+        sf::Text&                                   sfmlText{text.GetText()};
+        const sf::Vector2u                          textSize{
             (unsigned int)sfmlText.getGlobalBounds().width,
             (unsigned int)sfmlText.getGlobalBounds().height
         };
@@ -50,12 +54,21 @@ void RenderSystem::Update() {
         else {
             sfmlText.setPosition(bounds.GetLeft(), bounds.GetTop());
         }
-        window.draw(text.GetText());
+        const auto&                                 renderLayer{renderLayerMgr.Get(text.GetOwner())};
+        renderList.push_back(std::make_pair(renderLayer->GetLayerIndex(), &sfmlText));
+    }
+    std::sort(renderList.begin(), renderList.end());
+    for(auto drawable : renderList) {
+        window.draw(*drawable.second);
     }
 }
 
 ISystem::SystemID RenderSystem::GetSystemID() const {
     return ISystem::SystemID::RenderSystem;
+}
+
+RenderLayerMgr& RenderSystem::GetRenderLayerMgr() const {
+    return const_cast<RenderLayerMgr&>(renderLayerMgr);
 }
 
 RenderableMgr& RenderSystem::GetRenderableMgr() const {

@@ -94,6 +94,8 @@ void Application::Start() {
     sceneMgr = std::make_unique<SceneMgr>(entityMgr, resourceMgr);
 
     logSystem->Subscribe(inputSystem.get());
+    logSystem->Subscribe(eventSystem.get());
+    
     eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::NewGameStarted);
     eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::LoadGameStarted);
     eventSystem->Subscribe(sceneMgr.get(), Event::TypeID::OptionsStarted);

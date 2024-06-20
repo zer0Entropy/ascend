@@ -36,7 +36,7 @@ void LabelMgr::Remove(Entity owner) {
 
 Label* LabelMgr::Get(Entity owner) {
     const auto& iter{labelMap.find(owner)};
-    if(iter != labelMap.end()) {
+    if(iter != labelMap.end() && (*iter).second->IsEnabled()) {
         return iter->second.get();
     }
     return nullptr;
@@ -45,7 +45,9 @@ Label* LabelMgr::Get(Entity owner) {
 std::vector<Label*> LabelMgr::GetList() const {
     std::vector<Label*> labelList;
     for(const auto& label : labelMap) {
-        labelList.push_back(label.second.get());
+        if(label.second->IsEnabled()) {
+            labelList.push_back(label.second.get());
+        }
     }
     return labelList;
 }

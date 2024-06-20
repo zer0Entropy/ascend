@@ -17,9 +17,8 @@
 
 class Scene: public ISerializeable, public ILogMsgPublisher {
 public:
-    
 
-    Scene(EntityMgr& entMgr, ResourceMgr& resMgr);
+    Scene(int scnIndex, EntityMgr& entMgr, ResourceMgr& resMgr);
     Scene(const Scene& copy) = delete;
     Scene(Scene&& move) = delete;
     ~Scene() = default;
@@ -36,6 +35,7 @@ public:
     TextureSwitcherMgr&                     GetTextureSwitcherMgr() const;
     LeftClickableMgr&                       GetLeftClickableMgr() const;
 
+    MenuOptionSelector&                     GetOptionSelector() const;
     const Menu&                             GetMenu() const;
     void                                    SetSelectedMenuOption(int index);
     void                                    ConfirmSelectedMenuOption();
@@ -53,6 +53,8 @@ private:
 
     Entity                                  FindWidgetUnderCursor() const;
 
+    int                                     sceneIndex;
+    
     SpriteMgr                               spriteMgr;
     TextMgr                                 textMgr;
     BoundingBoxMgr                          boundingBoxMgr;
