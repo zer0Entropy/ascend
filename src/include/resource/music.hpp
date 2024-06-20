@@ -7,6 +7,11 @@ class Music: public Resource {
 public:
     Music(const ResourceID& resourceID, std::string_view resourcePath);
 
+    struct PlaybackParam {
+        bool                loop;
+        float               volume;
+    };
+
     enum class MusicStatus {
         Playing,
         Paused,

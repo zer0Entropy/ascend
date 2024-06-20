@@ -15,30 +15,77 @@ Scene::Scene(EntityMgr& entMgr, ResourceMgr& resMgr):
 }
 
 void Scene::LoadFromJSON(const nlohmann::json& json) {
-    const auto&                 findLayerIndex{json.find("layerIndex")};
-    const auto&                 layerList{findLayerIndex.value()};
-    LoadLayerIndex(layerList);
-    
-    const auto&                 findLayers{json.find("layers")};
-    const auto&                 layersJSON{findLayers.value()};
-    for(const auto& layerJSON : layersJSON) {
-        LoadLayer(layerJSON);
-    }
-
+    SceneParser                         parser{json};
+    layers =                            parser.LoadLayers();
     for(int index = 0; index < layers.size(); ++index) {
         Layer& layer{layers[index]};
-        switch(layer.typeID) {
-            case Layer::TypeID::Music: {
-                // Nothing to do ; already loaded above
+        LoadResources(layer);
+        if(layer.typeID == Layer::TypeID::Music) {
+            PlayBackgroundMusic(layer);
+        }
+        else if(layer.typeID == Layer::TypeID::Decoration) {
+            CreateDecorations(layer);
+        }
+        else if(layer.typeID == Layer::TypeID::MenuButton) {
+            CreateMenuButtons(layer);
+        }
+        else if(layer.typeID == Layer::TypeID::MenuLabel) {
+            CreateMenuLabels(layer);
+        }
+    }
+}
+
+void Scene::LoadResources(Layer& layer) {
+    for(const auto& resource : layer.resources) {
+        switch(resource.typeID) {
+            case Resource::TypeID::CompositeTexture: {
+                resourceMgr.LoadTexture(    resource.id,
+                                            resource.textureParams.size,
+                                            resource.textureParams.sourceTextureIDs,
+                                            resource.textureParams.destinations);
             } break;
-            case Layer::TypeID::Decoration: {
-                CreateDecorations(layer);
+            case Resource::TypeID::Font: {
+                resourceMgr.LoadFont(resource.id, resource.path);
+
             } break;
-            case Layer::TypeID::MenuButton: {
-                CreateMenuButtons(layer);
+            case Resource::TypeID::JSONDocument: {
+                resourceMgr.LoadJSONDocument(resource.id, resource.path);
             } break;
-            case Layer::TypeID::MenuLabel: {
-                CreateMenuLabels(layer);
+            case Resource::TypeID::Music: {
+                resourceMgr.LoadMusic(resource.id, resource.path);
+            } break;
+            case Resource::TypeID::RepeatingTexture: {
+                if(     resource.textureParams.repeatHorizontal > 0
+                    &&  resource.textureParams.repeatVertical == 0) {
+                    resourceMgr.LoadTexture(    resource.id,
+                                                resource.path,
+                                                Orientation::Horizontal,
+                                                resource.textureParams.repeatHorizontal,
+                                                resource.textureParams.sourceRect);
+                }
+                else if(    resource.textureParams.repeatHorizontal == 0
+                        &&  resource.textureParams.repeatVertical > 0) {
+                    resourceMgr.LoadTexture(    resource.id,
+                                                resource.path,
+                                                Orientation::Vertical,
+                                                resource.textureParams.repeatVertical,
+                                                resource.textureParams.sourceRect);
+                }
+                else {
+                    resourceMgr.LoadTexture(    resource.id,
+                                                resource.path,
+                                                sf::Vector2u{resource.textureParams.repeatHorizontal, resource.textureParams.repeatVertical},
+                                                resource.textureParams.sourceRect);
+                }
+            } break;
+            case Resource::TypeID::SimpleTexture: {
+                resourceMgr.LoadTexture(resource.id, resource.path, resource.textureParams.sourceRect);
+            } break;
+            case Resource::TypeID::Sound: {
+                resourceMgr.LoadSound(resource.id, resource.path);
+            } break;
+            case Resource::TypeID::TextFile: {
+                resourceMgr.LoadTextFile(resource.id, resource.path);
             } break;
         }
     }
@@ -112,502 +159,13 @@ void Scene::ConfirmSelectedMenuOption() {
     }
 }
 
-Scene::Layer* Scene::GetLayer(std::string_view name) {
+Layer* Scene::GetLayer(std::string_view name) {
     for(auto iter = layers.begin(); iter != layers.end(); ++iter) {
         if(iter->name.compare(name) == 0) {
             return &(*iter);
         }
     }
     return nullptr;
-}
-
-void Scene::LoadLayerIndex(const nlohmann::json& json) {
-    unsigned int index = 0;
-    for(const auto& layerName : json) {
-        layers.push_back(Layer{});
-        Layer&                  layer{layers.back()};
-        layer.index = index;
-        layerName.get_to(layer.name);
-    }
-}
-
-void Scene::LoadLayer(const nlohmann::json& json) {
-    ResourceMgr&                resourceMgr{Application::GetInstance().GetResourceMgr()};
-    const auto&                 findName{json.find("name")};
-    if(findName != json.end()) {
-        std::string             name{findName.value().template get<std::string>()};
-        Layer*                  layerPtr{GetLayer(name)};
-        if(!layerPtr)           {return;}
-        Layer&                  layer{*layerPtr};
-        const auto&             findType{json.find("type")};
-        if(findType != json.end()) {
-            std::string         typeName{findType.value().template get<std::string>()};
-            if(typeName.compare("decoration") == 0) {
-                layer.typeID = Layer::TypeID::Decoration;
-            }
-            else if(typeName.compare("menuButton") == 0) {
-                layer.typeID = Layer::TypeID::MenuButton;
-            }
-            else if(typeName.compare("menuLabel") == 0) {
-                layer.typeID = Layer::TypeID::MenuLabel;
-            }
-
-            const auto&             findResources{json.find("resources")};
-            const auto&             findMusic{json.find("music")};
-            const auto&             findBounds{json.find("bounds")};
-            const auto&             findSprites{json.find("sprites")};
-            const auto&             findTexts{json.find("texts")};
-            const auto&             findTextureSwitches{json.find("textureSwitches")};
-            const auto&             findAlignLabels{json.find("alignLabels")};
-            const auto&             findSoundEffects{json.find("soundEffects")};
-
-            if(findResources != json.end()) {
-                const auto&         resourcesJSON{findResources.value()};
-                LoadResourcesJSON(resourcesJSON, layer);
-                LoadResources(layer);
-            }
-
-            if(findBounds != json.end()) {
-                const auto&         boundsJSON{findBounds.value()};
-                LoadBoundingBoxes(boundsJSON, layer);
-            }
-            if(findSprites != json.end()) {
-                const auto&         spritesJSON{findSprites.value()};
-                LoadSprites(spritesJSON, layer);
-            }
-            if(findTexts != json.end()) {
-                const auto&         textsJSON{findTexts.value()};
-                LoadTexts(textsJSON, layer);
-            }
-            if(findTextureSwitches != json.end()) {
-                const auto&         textureSwitches{findTextureSwitches.value()};
-                LoadTextureSwitches(textureSwitches, layer);
-            }
-            if(findAlignLabels != json.end()) {
-                const auto&         alignLabelsJSON{findAlignLabels.value()};
-                LoadLabelAlignments(alignLabelsJSON, layer);
-            }
-            if(findMusic != json.end()) {
-                const auto&         musicJSON{findMusic.value()};
-                LoadMusic(musicJSON, layer);
-            }
-            if(findSoundEffects != json.end()) {
-                const auto&         soundEffectsJSON{findSoundEffects.value()};
-                LoadSoundEffects(soundEffectsJSON, layer);
-            }
-        }
-    }   
-}
-
-void Scene::LoadResourcesJSON(const nlohmann::json& json, Layer& layer) {
-    const auto&                 findFonts{json.find("fonts")};
-    if(findFonts != json.end()) {
-        LoadFontsJSON(findFonts.value(), layer);
-    }
-
-    const auto&                 findTextures{json.find("textures")};
-    if(findTextures != json.end()) {
-        LoadTexturesJSON(findTextures.value(), layer);
-    }
-
-    const auto&                 findMusics{json.find("musics")};
-    if(findMusics != json.end()) {
-        LoadMusicsJSON(findMusics.value(), layer);
-    }
-
-    const auto&                 findSounds{json.find("sounds")};
-    if(findSounds != json.end()) {
-        LoadSoundsJSON(findSounds.value(), layer);
-    }
-}
-
-void Scene::LoadFontsJSON(const nlohmann::json& json, Layer& layer) {
-    for(const auto& fontJSON : json) {
-        const auto&         findID{fontJSON.find("id")};
-        const auto&         findPath{fontJSON.find("path")};
-        if(     findID != fontJSON.end()
-            &&  findPath != fontJSON.end()) {
-            layer.fonts.push_back(ResourceToken{
-                                    findID.value().template get<std::string>(),
-                                    findPath.value().template get<std::string>()});
-        }
-    }
-}
-
-void Scene::LoadTexturesJSON(const nlohmann::json& json, Layer& layer) {
-    for(const auto& textureJSON : json) {
-        // Determine TextureStyle
-        Texture::Style              style{Texture::Style::Simple};
-        const auto&                 findStyle{textureJSON.find("style")};
-        if(findStyle != textureJSON.end()) {
-            std::string             name{findStyle.value().template get<std::string>()};
-            style =                 Texture::GetStyle(name);
-        }
-        switch(style) {
-            case Texture::Style::Simple: {
-                LoadSimpleTextureJSON(textureJSON, layer);
-            } break;
-            case Texture::Style::Composite: {
-                LoadCompositeTextureJSON(textureJSON, layer);
-            } break;
-            case Texture::Style::Repeating: {
-                LoadRepeatingTextureJSON(textureJSON, layer);
-            } break;
-        }
-    }
-}
-
-void Scene::LoadMusicsJSON(const nlohmann::json& json, Layer& layer) {
-    for(const auto& musicJSON : json) {
-        const auto&             findID{musicJSON.find("id")};
-        const auto&             findPath{musicJSON.find("path")};
-        if(     findID != musicJSON.end()
-            &&  findPath != musicJSON.end()) {
-            layer.musics.push_back(ResourceToken{
-                findID.value().template get<std::string>(),
-                findPath.value().template get<std::string>()});
-        }
-    }
-}
-
-void Scene::LoadSoundsJSON(const nlohmann::json& json, Layer& layer) {
-    for(const auto& soundJSON : json) {
-        const auto&             findID{soundJSON.find("id")};
-        const auto&             findPath{soundJSON.find("path")};
-        if(     findID != soundJSON.end()
-            &&  findPath != soundJSON.end()) {
-            layer.sounds.push_back(ResourceToken{
-                findID.value().template get<std::string>(),
-                findPath.value().template get<std::string>()});
-        }
-    }
-}
-
-sf::IntRect Scene::LoadRectFromJSON(const nlohmann::json& json) const {
-    sf::Rect            rectangle{0, 0, 0, 0};
-    const auto& findLeft{json.find("left")};
-    const auto& findTop{json.find("top")};
-    const auto& findWidth{json.find("width")};
-    const auto& findHeight{json.find("height")};
-    if(     findLeft != json.end()
-        &&  findTop != json.end()
-        &&  findWidth != json.end()
-        &&  findHeight != json.end()) {
-        rectangle.left =    findLeft.value();
-        rectangle.top =     findTop.value();
-        rectangle.width =   findWidth.value();
-        rectangle.height =  findHeight.value();
-    }
-    return rectangle;
-}
-
-void Scene::LoadSimpleTextureJSON(const nlohmann::json& json, Layer& layer) {
-    // Determine sourceRect
-    sf::IntRect             sourceRect{0, 0, 0, 0};
-    const auto&             findSourceRect{json.find("sourceRect")};
-    if(findSourceRect != json.end()) {
-        sourceRect =        LoadRectFromJSON(findSourceRect.value());
-    }
-    // SimpleTexture requires an ID and a Path, with an optional sourceRect
-    const auto&             findID{json.find("id")};
-    const auto&             findPath{json.find("path")};
-    if(     findID != json.end()
-        &&  findPath != json.end()) {
-        layer.textures.push_back(ResourceToken{
-                                                findID.value().template get<std::string>(),
-                                                findPath.value().template get<std::string>(),
-                                                sourceRect}); // sourceRect defaults to {0, 0, 0, 0}
-    }
-}
-
-void Scene::LoadCompositeTextureJSON(const nlohmann::json& json, Layer& layer) {
-    /*  CompositeTexture requires:
-            ResourceID
-            size
-            sourceList
-            destList
-    */
-    const auto&                     findID{json.find("id")};
-    const auto&                     findSize{json.find("size")};
-    const auto&                     findSources{json.find("sources")};
-    const auto&                     findDestinations{json.find("destinations")};
-    if(     findID != json.end()
-        &&  findSize != json.end()
-        &&  findSources != json.end()
-        &&  findDestinations != json.end()) {
-        const auto&                 sizeJSON{findSize.value()};
-        const auto&                 findWidth{sizeJSON.find("width")};
-        const auto&                 findHeight{sizeJSON.find("height")};
-        sf::Vector2u                size{
-            findWidth.value(),
-            findHeight.value()  
-        };
-        std::vector<ResourceID>     sourceList;
-        for(const auto& source : findSources.value()) {
-            ResourceID sourceID{(ResourceID)source.template get<std::string>()};
-            sourceList.push_back(sourceID);
-        }
-        std::vector<sf::Vector2u>   destList;
-        const auto&                 destJSON{findDestinations.value()};
-        for(const auto& dest: destJSON) {
-            const auto&             destX{dest.find("x")};
-            const auto&             destY{dest.find("y")};
-            if(     destX != destJSON.end()
-                &&  destY != destJSON.end()) {
-                destList.push_back(sf::Vector2u{destX.value(), destY.value()});
-            }
-        }
-        layer.compositeTextures.push_back(CompositeTextureToken{
-                                                            findID.value().template get<std::string>(),
-                                                            size,
-                                                            sourceList,
-                                                            destList});
-    }
-}
-
-void Scene::LoadRepeatingTextureJSON(const nlohmann::json& json, Layer& layer) {
-    // Determine sourceRect
-    sf::IntRect             sourceRect{0, 0, 0, 0};
-    const auto&             findSourceRect{json.find("sourceRect")};
-    if(findSourceRect != json.end()) {
-        sourceRect = LoadRectFromJSON(findSourceRect.value());
-    }
-
-    /* RepeatingTexture requires either:
-        (a)     ResourceID
-                path
-                sourceRect (optional)
-                Orientation
-                numRepetitions
-    OR
-        (b)     ResourceID
-                path
-                sourceRect (optional)
-                repeatRect
-    */ 
-    const auto&             findID{json.find("id")};
-    const auto&             findPath{json.find("path")};
-    const auto&             findOrientation{json.find("orientation")};
-    const auto&             findRepetitions{json.find("repeat")};
-    const auto&             findRepeatRect{json.find("repeatRect")};
-    if(     findID != json.end()
-        &&  findPath != json.end()
-        &&  findOrientation != json.end()
-        &&  findRepetitions != json.end()) {
-        Orientation orientation{GetOrientation(findOrientation.value().template get<std::string>())};
-        layer.repeatingTextures.push_back(RepeatingTextureToken{
-                                            findID.value().template get<std::string>(),
-                                            findPath.value().template get<std::string>(),
-                                            sourceRect,
-                                            orientation,
-                                            findRepetitions.value()});
-    }
-    else if(findRepeatRect != json.end()) {
-        const auto&         repeatRect{findRepeatRect.value()};
-        const auto&         findX{repeatRect.find("x")};
-        const auto&         findY{repeatRect.find("y")};
-        if(     findID != json.end()
-            &&  findPath != json.end()
-            &&  findX != repeatRect.end()
-            &&  findY != repeatRect.end()) {
-            layer.repeatingTextures.push_back(RepeatingTextureToken{
-                                            findID.value().template get<std::string>(),
-                                            findPath.value().template get<std::string>(),
-                                            sourceRect,
-                                            sf::Vector2u{findX.value(), findY.value()}});
-        }
-    }
-}
-
-
-void Scene::LoadResources(Layer& layer) {
-    for(const auto& font : layer.fonts) {
-        resourceMgr.LoadFont(font.id, font.path);
-    }
-    for(const auto& texture : layer.textures) {
-        resourceMgr.LoadTexture(texture.id, texture.path, texture.sourceRect);
-    }
-    for(const auto& repeatingTexture : layer.repeatingTextures) {
-        if(repeatingTexture.isRect) {
-            resourceMgr.LoadTexture(    repeatingTexture.id,
-                                        repeatingTexture.path,
-                                        repeatingTexture.repeatRect,
-                                        repeatingTexture.sourceRect);
-        }
-        else {
-            resourceMgr.LoadTexture(    repeatingTexture.id,
-                                        repeatingTexture.path,
-                                        repeatingTexture.orientation,
-                                        repeatingTexture.numRepetitions,
-                                        repeatingTexture.sourceRect);
-        }
-    }
-    for(const auto& compositeTexture : layer.compositeTextures) {
-        resourceMgr.LoadTexture(    compositeTexture.id,
-                                    compositeTexture.size,
-                                    compositeTexture.sourceTextureIDs,
-                                    compositeTexture.destinations);
-    }
-    for(const auto& music : layer.musics) {
-        resourceMgr.LoadMusic(music.id, music.path);
-    }
-    for(const auto& sound : layer.sounds) {
-        resourceMgr.LoadSound(sound.id, sound.path);
-    }
-}
-
-void Scene::LoadBoundingBoxes(const nlohmann::json& json, Layer& layer) {
-    for(const auto& boundsJSON : json) {
-        const auto&         findBoundsRect{boundsJSON.find("boundsRect")};
-        const auto&         rectangle{findBoundsRect.value()};
-        const auto&         findLeft{rectangle.find("left")};
-        const auto&         findTop{rectangle.find("top")};
-        const auto&         findWidth{rectangle.find("width")};
-        const auto&         findHeight{rectangle.find("height")};
-        if(     findLeft != rectangle.end()
-            &&  findTop != rectangle.end()
-            &&  findWidth != rectangle.end()
-            &&  findHeight != rectangle.end()) {
-            layer.boundingBoxes.push_back(sf::Rect<unsigned int>{
-                findLeft.value(),
-                findTop.value(),
-                findWidth.value(),
-                findHeight.value()
-            });
-        }
-    }
-}
-
-void Scene::LoadSprites(const nlohmann::json& json, Layer& layer) {
-    ResourceMgr&                    resourceMgr{Application::GetInstance().GetResourceMgr()};
-    for(const auto& spriteJSON : json) {
-        const auto&                 findAttachments{spriteJSON.find("attachments")};
-        const auto&                 attachmentsJSON{findAttachments.value()};
-        const auto&                 findTextures{attachmentsJSON.find("textures")};
-        if(findTextures != attachmentsJSON.end()) {
-            const auto&             texturesJSON{findTextures.value()};
-            ResourceID              textureID{texturesJSON.begin()->template get<std::string>()};
-            Texture*                texture{resourceMgr.GetTexture(textureID)};
-            layer.spriteAttachments.push_back(texture);
-        }
-    }
-}
-
-void Scene::LoadTexts(const nlohmann::json& json, Layer& layer) {
-    ResourceMgr&                    resourceMgr{Application::GetInstance().GetResourceMgr()};
-    for(const auto& textJSON : json) {
-        const auto&                 findContents{textJSON.find("contents")};
-        if(findContents != textJSON.end()) {
-            layer.textContents.push_back(findContents.value().template get<std::string>());
-        }
-        const auto&                 findFontParam{textJSON.find("fontParameters")};
-        if(findFontParam != textJSON.end()) {
-            const auto&             fontParamJSON{findFontParam.value()};
-            const auto&             findFontID{fontParamJSON.find("id")};
-            const auto&             findFontSize{fontParamJSON.find("fontSize")};
-            const auto&             findOutlineColor{fontParamJSON.find("outlineColor")};
-            const auto&             findFillColor{fontParamJSON.find("fillColor")};
-            if(     findFontID != fontParamJSON.end()
-                &&  findFontSize != fontParamJSON.end()
-                &&  findOutlineColor != fontParamJSON.end()
-                &&  findFillColor != fontParamJSON.end()) {
-                layer.fontParameters.push_back(
-                    Text::FontParameters{
-                        findFontID.value().template get<std::string>(),
-                        findFontSize.value(),
-                        GetColorFromHex(findOutlineColor.value().template get<std::string>()),
-                        GetColorFromHex(findFillColor.value().template get<std::string>())
-                    }
-                );
-            }
-        }
-        const auto&                 findAttachments{textJSON.find("attachments")};
-        const auto&                 attachmentsJSON{findAttachments.value()};
-        const auto&                 findFonts{attachmentsJSON.find("fonts")};
-        if(findFonts != attachmentsJSON.end()) {
-            const auto&             fontsJSON{findFonts.value()};
-            ResourceID              fontID{fontsJSON.begin()->template get<std::string>()};
-            Font*                   font{resourceMgr.GetFont(fontID)};
-            layer.textAttachments.push_back(font);
-        }
-    }
-}
-
-void Scene::LoadTextureSwitches(const nlohmann::json& json, Layer& layer) {
-    for(const auto& textureSwitch : json) {
-        const auto&                 findTriggerEvent{textureSwitch.find("triggerEvent")};
-        const auto&                 findTextureID{textureSwitch.find("textureID")};
-        if(     findTriggerEvent != textureSwitch.end()
-            &&  findTextureID != textureSwitch.end()) {
-            std::string             eventName{findTriggerEvent.value().template get<std::string>()};
-            Event::TypeID           triggerEvent;
-            if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStarted)) == 0) {
-                triggerEvent = Event::TypeID::CursorHoveringStarted;
-            }
-            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::CursorHoveringStopped)) == 0) {
-                triggerEvent = Event::TypeID::CursorHoveringStopped;
-            }
-            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressStarted)) == 0) {
-                triggerEvent = Event::TypeID::ButtonPressStarted;
-            }
-            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressCompleted)) == 0) {
-                triggerEvent = Event::TypeID::ButtonPressCompleted;
-            }
-            else if(eventName.compare(Event::TypeNames.at((int)Event::TypeID::ButtonPressAborted)) == 0) {
-                triggerEvent = Event::TypeID::ButtonPressAborted;
-            }
-            else {
-                continue;
-            }
-            layer.textureSwitchTriggers.push_back(std::make_pair(
-                triggerEvent,
-                findTextureID.value().template get<std::string>()   
-            ));
-        }
-    }
-}
-
-void Scene::LoadLabelAlignments(const nlohmann::json& json, Layer& layer) {
-    for(const auto& alignLabel : json) {
-        const auto&                 findAlignment{alignLabel.find("alignment")};
-        if(findAlignment != alignLabel.end()) {
-            std::string             alignmentName{findAlignment.value().template get<std::string>()};
-            layer.labelAlignments.push_back(GetAlignment(alignmentName));
-        }
-    }
-}
-
-void Scene::LoadMusic(const nlohmann::json& json, Layer& layer) {
-    if(layer.musics.empty()) {
-        return;
-    }
-    const auto&                 findLoop{json.find("loop")};
-    bool                        loop{true};
-    if(findLoop != json.end()) {
-        loop = findLoop.value();
-    }
-    const ResourceToken&        musicToken{*layer.musics.begin()};
-    Music* music{resourceMgr.GetMusic(musicToken.id)};
-    if(music) {
-        MusicSystem& musicSystem{*Application::GetInstance().GetMusicSystem()};
-        musicSystem.SetMusic(musicToken.id);
-        musicSystem.SetLoop(loop);
-        musicSystem.Play();
-    }
-}
-
-void Scene::LoadSoundEffects(const nlohmann::json& json, Layer& layer) {
-    SoundSystem&            soundSystem{*Application::GetInstance().GetSoundSystem()};
-    for(const auto& soundEffect : json) {
-        const auto&         findTriggerEvent{soundEffect.find("triggerEvent")};
-        const auto&         findSoundID{soundEffect.find("soundID")};
-        if(     findTriggerEvent != soundEffect.end()
-            &&  findSoundID != soundEffect.end()) {
-            std::string     triggerEventName{findTriggerEvent.value().template get<std::string>()};
-            ResourceID      soundID{(ResourceID)findSoundID.value().template get<std::string>()};
-            soundSystem.AddSoundEffect(SoundEffectToken{Event::GetTypeID(triggerEventName), soundID});
-        }
-    }
 }
 
 void Scene::CreateDecorations(Layer& layer) {
@@ -630,7 +188,8 @@ void Scene::CreateDecorations(Layer& layer) {
     for(const auto& texture : layer.spriteAttachments) {
         spriteMgr.Add((Entity)index);
         auto& sprite{*spriteMgr.Get((Entity)index)};
-        Resource* attachment{layer.spriteAttachments.at(index - firstEntity)};
+        ResourceID attachmentID{layer.spriteAttachments.at(index - firstEntity)};
+        Resource* attachment{resourceMgr.GetTexture(attachmentID)};
         sprite.Attach(attachment);
         if(     attachment->GetTypeID() == Resource::TypeID::SimpleTexture
             ||  attachment->GetTypeID() == Resource::TypeID::CompositeTexture
@@ -676,7 +235,8 @@ void Scene::CreateMenuButtons(Layer& layer) {
     for(const auto& texture : layer.spriteAttachments) {
         spriteMgr.Add((Entity)index);
         auto& sprite{*spriteMgr.Get((Entity)index)};
-        Resource* attachment{layer.spriteAttachments.at(index - firstEntity)};
+        ResourceID attachmentID{layer.spriteAttachments.at(index - firstEntity)};
+        Resource* attachment{resourceMgr.GetTexture(attachmentID)};
         sprite.Attach(attachment);
         if(     attachment->GetTypeID() == Resource::TypeID::SimpleTexture
             ||  attachment->GetTypeID() == Resource::TypeID::CompositeTexture
@@ -698,7 +258,7 @@ void Scene::CreateMenuButtons(Layer& layer) {
         textureSwitcherMgr.Add(entity, *spriteMgr.Get(entity));
         leftClickableMgr.Add(entity, *boundingBoxPtr);
         inputSystem.Subscribe(leftClickableMgr.Get(entity));
-        for(const auto& textureSwitch : layer.textureSwitchTriggers) {
+        for(const auto& textureSwitch : layer.textureSwitches) {
             ResourceID textureID{textureSwitch.second};
             Texture* texture{resourceMgr.GetTexture(textureID)};
             auto& textureSwitcher{*textureSwitcherMgr.Get(entity)};
@@ -714,6 +274,7 @@ void Scene::CreateMenuButtons(Layer& layer) {
                             *boundingBoxMgr.Get(entityIndex),
                             *spriteMgr.Get(entityIndex));
     }
+    CreateSoundEffects(layer);
 }
 
 void Scene::CreateMenuLabels(Layer& layer) {
@@ -737,7 +298,8 @@ void Scene::CreateMenuLabels(Layer& layer) {
     int index = (int)firstEntity;
     for(const auto& textString : layer.textContents) {
         const auto& fontParam{layer.fontParameters.at(index - (int)firstEntity)};
-        Resource* attachment(layer.textAttachments.at(index - (int)firstEntity));
+        ResourceID attachmentID(layer.textAttachments.at(index - (int)firstEntity));
+        Resource* attachment{resourceMgr.GetFont(attachmentID)};
         textMgr.Add((Entity)index);
         Text& text{*textMgr.Get((Entity)index)};
         text.Attach(attachment);
@@ -749,6 +311,22 @@ void Scene::CreateMenuLabels(Layer& layer) {
         alignLabelMgr.Add((Entity)index, layer.labelAlignments.at(index - (int)firstEntity), *labelMgr.Get((Entity)index));
         index++;
     }
+}
+
+void Scene::CreateSoundEffects(Layer& layer) {
+    SoundSystem&                    soundSystem{*Application::GetInstance().GetSoundSystem()};
+    for(const auto& soundEffect : layer.soundEffects) {
+        soundSystem.AddSoundEffect(SoundEffectToken{
+            soundEffect.first,
+            soundEffect.second
+        });
+    }
+}
+
+void Scene::PlayBackgroundMusic(Layer &layer) {
+    MusicSystem&                    musicSystem{*Application::GetInstance().GetMusicSystem()};
+    musicSystem.SetMusic(layer.backgroundMusicID);
+    musicSystem.Play();
 }
 
 Entity Scene::FindWidgetUnderCursor() const {

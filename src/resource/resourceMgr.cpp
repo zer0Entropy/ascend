@@ -66,6 +66,7 @@ JSONDocument* ResourceMgr::LoadJSONDocument(const ResourceID& resourceID, std::s
         std::string msg{"JSONDocument \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg, MsgPriorityID::Error);
     }
+    return nullptr;
 }
 
 void ResourceMgr::UnloadJSONDocument(const ResourceID& resourceID) {

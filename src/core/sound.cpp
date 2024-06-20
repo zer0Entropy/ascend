@@ -32,6 +32,7 @@ void SoundSystem::HandleEvent(const Event& event) {
     Sound*                  triggeredSound{GetTriggeredSound(event.GetTypeID())};
     SetSound(triggeredSound);
     Play();
+    currentSound = nullptr;
 }
 
 Sound* SoundSystem::GetCurrentSound() const {

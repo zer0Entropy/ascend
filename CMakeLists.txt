@@ -46,6 +46,7 @@ add_executable(ascend       src/main.cpp
                             src/scene/scene.cpp
                             src/scene/sceneMgr.cpp
                             src/scene/optionSelector.cpp
+                            src/scene/parser.cpp
                             src/interface/signal.cpp)
 
 #target_compile_options(ascend PRIVATE -fstandalone-debug)
