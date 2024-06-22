@@ -4,6 +4,11 @@
 #include "../include/resource/repeatingTexture.hpp"
 
 Font* ResourceMgr::LoadFont(const ResourceID& resourceID, std::string_view resourcePath) {
+    bool alreadyExists{false};
+    const auto& iter{fontMap.find(resourceID)};
+    if(iter != fontMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         fontMap.insert(std::make_pair(resourceID, std::make_unique<Font>(resourceID, resourcePath)))
     };
@@ -13,7 +18,13 @@ Font* ResourceMgr::LoadFont(const ResourceID& resourceID, std::string_view resou
         return GetFont(resourceID);
     }
     else {
-        std::string errorMsg{"File not found: " + std::string{resourcePath} + "."};
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "Font with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        };
         this->PublishMsg(errorMsg, MsgPriorityID::Error);
         std::string msg{"Font \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg, MsgPriorityID::Error);
@@ -52,6 +63,11 @@ Font* ResourceMgr::GetFont(const ResourceID& resourceID) {
 }
 
 JSONDocument* ResourceMgr::LoadJSONDocument(const ResourceID& resourceID, std::string_view resourcePath) {
+    bool alreadyExists{false};
+    const auto& iter{jsonDocMap.find(resourceID)};
+    if(iter != jsonDocMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         jsonDocMap.insert(std::make_pair(resourceID, std::make_unique<JSONDocument>(resourceID, resourcePath)))
     };
@@ -61,7 +77,13 @@ JSONDocument* ResourceMgr::LoadJSONDocument(const ResourceID& resourceID, std::s
         return GetJSONDocument(resourceID);
     }
     else {
-        std::string errorMsg{"File not found: " + std::string{resourcePath} + "."};
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "JSONDocument with ResourceID=\"" + resourceID + "\"already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
         this->PublishMsg(errorMsg, MsgPriorityID::Error);
         std::string msg{"JSONDocument \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg, MsgPriorityID::Error);
@@ -100,6 +122,11 @@ JSONDocument* ResourceMgr::GetJSONDocument(const ResourceID& resourceID) {
 }
 
 TextFile* ResourceMgr::LoadTextFile(const ResourceID& resourceID, std::string_view resourcePath, bool overwrite) {
+    bool alreadyExists{false};
+    const auto& iter{textFileMap.find(resourceID)};
+    if(iter != textFileMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         textFileMap.insert(std::make_pair(resourceID, std::make_unique<TextFile>(resourceID, resourcePath, overwrite)))
     };
@@ -109,7 +136,13 @@ TextFile* ResourceMgr::LoadTextFile(const ResourceID& resourceID, std::string_vi
         return GetTextFile(resourceID);
     }
     else {
-        std::string errorMsg{"File not found: " + std::string{resourcePath} + "."};
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "TextFile with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
         this->PublishMsg(errorMsg, MsgPriorityID::Error);
         std::string msg{"TextFile \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg, MsgPriorityID::Error);
@@ -150,6 +183,11 @@ TextFile* ResourceMgr::GetTextFile(const ResourceID& resourceID) {
 Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
                                     std::string_view resourcePath,
                                     const sf::IntRect pixelRect) {
+    bool alreadyExists{false};
+    const auto& iter{textureMap.find(resourceID)};
+    if(iter != textureMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         textureMap.insert(std::make_pair(resourceID, std::make_unique<Texture>(resourceID, resourcePath, pixelRect)))
     };
@@ -157,6 +195,18 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
         std::string msg{"Texture \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg);
         return GetTexture(resourceID);
+    }
+    else {
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "Texture with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
+        this->PublishMsg(errorMsg, MsgPriorityID::Error);
+        std::string msg{"Texture \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg, MsgPriorityID::Error);
     }
     return nullptr;
 }
@@ -166,6 +216,11 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
                                     Orientation orientation,
                                     unsigned int numRepetitions,
                                     const sf::IntRect pixelRect) {
+    bool alreadyExists{false};
+    const auto& iter{textureMap.find(resourceID)};
+    if(iter != textureMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         textureMap.insert(std::make_pair(resourceID, std::make_unique<RepeatingTexture>(
                                                         resourceID,
@@ -179,6 +234,18 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
         this->PublishMsg(msg);
         return GetTexture(resourceID);
     }
+    else {
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "Texture with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
+        this->PublishMsg(errorMsg, MsgPriorityID::Error);
+        std::string msg{"Texture \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg, MsgPriorityID::Error);
+    }
     return nullptr;
 }
 
@@ -186,6 +253,11 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
                                     std::string_view resourcePath,
                                     sf::Vector2u repeatRect,
                                     const sf::IntRect pixelRect) {
+    bool alreadyExists{false};
+    const auto& iter{textureMap.find(resourceID)};
+    if(iter != textureMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         textureMap.insert(std::make_pair(resourceID, std::make_unique<RepeatingTexture>(
                                                         resourceID,
@@ -198,6 +270,18 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
         this->PublishMsg(msg);
         return GetTexture(resourceID);
     }
+    else {
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "Texture with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
+        this->PublishMsg(errorMsg, MsgPriorityID::Error);
+        std::string msg{"Texture \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg, MsgPriorityID::Error);
+    }
     return nullptr;
 }
 
@@ -205,6 +289,11 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
                                     const sf::Vector2u& size,
                                     const std::vector<ResourceID>& sourceTextureIDs,
                                     const std::vector<sf::Vector2u>& destinations) {
+    bool alreadyExists{false};
+    const auto& iter{textureMap.find(resourceID)};
+    if(iter != textureMap.end()) {
+        alreadyExists = true;
+    }
     std::vector<Texture*> sourceTextures;
     for(const auto& srcTextureID : sourceTextureIDs) {
         Texture* texture = GetTexture(srcTextureID);
@@ -212,19 +301,41 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
             sourceTextures.push_back(texture);
         }
     }
+    std::string errorMsg{""};
     auto result{
         textureMap.insert(std::make_pair(resourceID, std::make_unique<CompositeTexture>(resourceID, size)))
     };
-    if(!sourceTextures.empty() && result.second) {
-        CompositeTexture& composite{*dynamic_cast<CompositeTexture*>(GetTexture(resourceID))};
-        int index = 0;
-        for(const auto& destination : destinations) {
-            composite.AddTexture(sourceTextures[index++]->GetTexture(), destination);
+    if(result.second) {
+        if(!sourceTextures.empty()) {
+            CompositeTexture& composite{*dynamic_cast<CompositeTexture*>(GetTexture(resourceID))};
+            int index = 0;
+            for(const auto& destination : destinations) {
+                composite.AddTexture(sourceTextures[index++]->GetTexture(), destination);
+            }
+            std::string msg{"Texture \"" + resourceID + "\" successfully loaded (as a composite of previously-loaded textures)."};
+            this->PublishMsg(msg);
+            return GetTexture(resourceID);
         }
-        std::string msg{"Texture \"" + resourceID + "\" successfully loaded (as a composite of previously-loaded textures)."};
-        this->PublishMsg(msg);
-        return GetTexture(resourceID);
+        else {
+            errorMsg = "SourceTextures not found!";
+        }
     }
+    else {
+        if(alreadyExists) {
+            errorMsg = "Texture with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "Unknown error!";
+        }
+    }
+    this->PublishMsg(errorMsg, MsgPriorityID::Error);
+    std::string msg{"Texture \"" + resourceID + "\" failed to load from these SourceTextures:\n"};
+    for(const auto& sourceTextureID : sourceTextureIDs) {
+        msg.append("\t");
+        msg.append(sourceTextureID);
+        msg.append("\n");
+    }
+    this->PublishMsg(msg, MsgPriorityID::Error);
     return nullptr;
 }
 
@@ -259,6 +370,11 @@ Texture* ResourceMgr::GetTexture(const ResourceID& resourceID) {
 }
 
 Music* ResourceMgr::LoadMusic(const ResourceID& resourceID, std::string_view resourcePath) {
+    bool alreadyExists{false};
+    const auto& iter{textureMap.find(resourceID)};
+    if(iter != textureMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         musicMap.insert(std::make_pair(resourceID, std::make_unique<Music>(resourceID, resourcePath)))
     };
@@ -266,6 +382,18 @@ Music* ResourceMgr::LoadMusic(const ResourceID& resourceID, std::string_view res
         std::string msg{"Music \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg);
         return GetMusic(resourceID);
+    }
+    else {
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "Music with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
+        this->PublishMsg(errorMsg, MsgPriorityID::Error);
+        std::string msg{"Music \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg, MsgPriorityID::Error);
     }
     return nullptr;
 }
@@ -301,6 +429,11 @@ Music* ResourceMgr::GetMusic(const ResourceID& resourceID) {
 }
 
 Sound* ResourceMgr::LoadSound(const ResourceID& resourceID, std::string_view resourcePath) {
+    bool alreadyExists{false};
+    const auto& iter{textureMap.find(resourceID)};
+    if(iter != textureMap.end()) {
+        alreadyExists = true;
+    }
     auto result{
         soundMap.insert(std::make_pair(resourceID, std::make_unique<Sound>(resourceID, resourcePath)))
     };
@@ -308,6 +441,18 @@ Sound* ResourceMgr::LoadSound(const ResourceID& resourceID, std::string_view res
         std::string msg{"Sound \"" + resourceID + "\" successfully loaded from " + std::string{resourcePath} + "."};
         this->PublishMsg(msg);
         return GetSound(resourceID);
+    }
+    else {
+        std::string errorMsg{""};
+        if(alreadyExists) {
+            errorMsg = "Music with ResourceID=\"" + resourceID + "\" already exists!";
+        }
+        else {
+            errorMsg = "File not found: " + std::string{resourcePath} + ".";
+        }
+        this->PublishMsg(errorMsg, MsgPriorityID::Error);
+        std::string msg{"Music \"" + resourceID + "\" failed to load from " + std::string{resourcePath} + "."};
+        this->PublishMsg(msg, MsgPriorityID::Error);
     }
     return nullptr;
 }
