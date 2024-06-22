@@ -1,5 +1,7 @@
 #include <algorithm>
 #include "../include/core/render.hpp"
+#include "../include/component/sprite.hpp"
+#include "../include/component/text.hpp"
 
 RenderSystem::RenderSystem(sf::RenderWindow& win):
     ISystem{},
@@ -8,58 +10,78 @@ RenderSystem::RenderSystem(sf::RenderWindow& win):
 }
 
 void RenderSystem::Update() {
-    std::vector<std::pair<int, sf::Drawable*>>      renderList;
-    const auto                                      renderableList{renderableMgr.GetList()};
-    for(const auto& renderable : renderableList) {
-        const auto&                                 bounds{renderable->GetBounds()};
-        auto& sprite{renderable->GetSprite()};
-        sf::Sprite&                                 sfmlSprite{sprite.GetSprite()};
-        auto scaleRenderable{scaleRenderableMgr.Get(sprite.GetOwner())};
-        if(scaleRenderable) {
-            const auto&                             scaleFactor{scaleRenderable->GetScalingFactor()};
-            sfmlSprite.setScale(scaleFactor.x, scaleFactor.y);
-        }
-        sfmlSprite.setPosition(bounds.GetLeft(), bounds.GetTop());
-        const auto&                                 renderLayer{renderLayerMgr.Get(sprite.GetOwner())};
-        renderList.push_back(std::make_pair(renderLayer->GetLayerIndex(), &sfmlSprite));
-    }
-    const auto                                      labelList{labelMgr.GetList()};
-    for(const auto& label : labelList) {
-        const auto&                                 bounds{label->GetBounds()};
-        const auto&                                 boundingBox{bounds.GetRect()};
-        auto&                                       text{label->GetText()};
-        auto                                        alignLabel{alignLabelMgr.Get(label->GetOwner())};
-        sf::Text&                                   sfmlText{text.GetText()};
-        const sf::Vector2u                          textSize{
-            (unsigned int)sfmlText.getGlobalBounds().width,
-            (unsigned int)sfmlText.getGlobalBounds().height
-        };
-        if(alignLabel) {
-            switch(alignLabel->GetAlignment()) {
-                default:
-                case Alignment::Left: {
-                    sfmlText.setPosition(   boundingBox.left,
-                                            boundingBox.top + boundingBox.height - sfmlText.getGlobalBounds().height);
-                } break;
-                case Alignment::Center: {
-                    sfmlText.setPosition(   boundingBox.left + (boundingBox.width / 2.0f) - (textSize.x / 2.0f),
-                                            boundingBox.top + (boundingBox.height / 2.0f) - (3 * text.GetFontParameters().fontSize / 5.0f));
-                } break;
-                case Alignment::Right: {
-                    sfmlText.setPosition(   boundingBox.left + boundingBox.width - textSize.x,
-                                            boundingBox.top + boundingBox.height - textSize.y);
-                }
+    const auto& renderList{renderableMgr.GetList()};
+    for(const auto& renderable : renderList) {
+        Sprite*             sprite{renderable->GetSprite()};
+        Text*               text{renderable->GetText()};
+        Entity              owner{renderable->GetOwner()};
+        auto                scale{scaleRenderableMgr.Get(owner)};
+        auto                alignable{alignableMgr.Get(owner)};
+        if(scale) {
+            const auto&     scaleFactor{scale->GetScalingFactor()};
+            if(sprite) {
+                sprite->GetSprite().setScale(scaleFactor);
+            }
+            if(text) {
+                text->GetText().setScale(scaleFactor);
             }
         }
-        else {
-            sfmlText.setPosition(bounds.GetLeft(), bounds.GetTop());
+        const auto&         bounds{renderable->GetBounds()};
+        if(sprite) {
+            sf::Sprite&     sfmlSprite{sprite->GetSprite()};
+            if(alignable) {
+                const auto& alignBounds{alignable->GetTargetBoundingBox()};
+                const auto& alignRect{alignBounds.GetRect()};
+                Alignment   alignment{alignable->GetAlignment()};
+                switch(alignment) {
+                    case Alignment::Left:
+                        sfmlSprite.setPosition(alignRect.left, alignRect.top);
+                        break;
+                    case Alignment::Center:
+                        sfmlSprite.setPosition(
+                            alignRect.left + (alignRect.width / 2.0f) - (sfmlSprite.getGlobalBounds().width / 2.0f),
+                            alignRect.top + (alignRect.height / 2.0f) - (sfmlSprite.getGlobalBounds().height / 2.0f));
+                        break;
+                    case Alignment::Right:
+                        sfmlSprite.setPosition(
+                            alignRect.left + alignRect.width - sfmlSprite.getGlobalBounds().width,
+                            alignRect.top  
+                        );
+                        break;
+                }
+            }
+            else {
+                sfmlSprite.setPosition(bounds.GetLeft(), bounds.GetTop());
+            }
+            window.draw(sfmlSprite);
         }
-        const auto&                                 renderLayer{renderLayerMgr.Get(text.GetOwner())};
-        renderList.push_back(std::make_pair(renderLayer->GetLayerIndex(), &sfmlText));
-    }
-    std::sort(renderList.begin(), renderList.end());
-    for(auto drawable : renderList) {
-        window.draw(*drawable.second);
+        if(text) {
+            sf::Text&       sfmlText{text->GetText()};
+            const auto&     alignBounds{alignable->GetTargetBoundingBox()};
+            const auto&     alignRect{alignBounds.GetRect()};
+            Alignment       alignment{alignable->GetAlignment()};
+            if(alignable) {
+                switch(alignment) {
+                    case Alignment::Left:
+                        sfmlText.setPosition(alignRect.left, alignRect.top);
+                    break;
+                    case Alignment::Center:
+                        sfmlText.setPosition(
+                            alignRect.left + (alignRect.width / 2.0f) - (sfmlText.getGlobalBounds().width / 2.0f),
+                            alignRect.top + (alignRect.height / 5.0f) + (sfmlText.getCharacterSize() / 10.0f));
+                    break;
+                    case Alignment::Right:
+                        sfmlText.setPosition(
+                            alignRect.left + alignRect.width - sfmlText.getGlobalBounds().width,
+                            alignRect.top);
+                    break;
+                }
+            }
+            else {
+                sfmlText.setPosition(bounds.GetLeft(), bounds.GetTop());
+            }
+            window.draw(sfmlText);
+        }
     }
 }
 
@@ -67,8 +89,8 @@ ISystem::SystemID RenderSystem::GetSystemID() const {
     return ISystem::SystemID::RenderSystem;
 }
 
-RenderLayerMgr& RenderSystem::GetRenderLayerMgr() const {
-    return const_cast<RenderLayerMgr&>(renderLayerMgr);
+LayerIndexMgr& RenderSystem::GetLayerIndexMgr() const {
+    return const_cast<LayerIndexMgr&>(layerIndexMgr);
 }
 
 RenderableMgr& RenderSystem::GetRenderableMgr() const {
@@ -79,8 +101,8 @@ LabelMgr& RenderSystem::GetLabelMgr() const {
     return const_cast<LabelMgr&>(labelMgr);
 }
 
-AlignLabelMgr& RenderSystem::GetAlignLabelMgr() const {
-    return const_cast<AlignLabelMgr&>(alignLabelMgr);
+AlignableMgr& RenderSystem::GetAlignableMgr() const {
+    return const_cast<AlignableMgr&>(alignableMgr);
 }
 
 ScaleRenderableMgr& RenderSystem::GetScaleRenderableMgr() const {

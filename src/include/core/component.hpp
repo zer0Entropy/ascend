@@ -9,11 +9,11 @@ public:
         BoundingBox,
         Sprite,
         Text,
-        RenderLayer,
+        LayerIndex,
         Renderable,
         ScaleRenderable,
         Label,
-        AlignLabel,
+        Alignable,
         Hoverable,
         TextureSwitcher,
         LeftClickable

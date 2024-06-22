@@ -1,13 +1,13 @@
-#include "../include/component/alignLabel.hpp"
+#include "../include/component/alignable.hpp"
 
-AlignLabel::AlignLabel(Entity cEntity, Alignment align, Label& labelCmp):
-    Component{Component::TypeID::AlignLabel, cEntity},
+Alignable::Alignable(Entity cEntity, Alignment align, const BoundingBox& alignBounds):
+    Component{Component::TypeID::Alignable, cEntity},
     alignment{align},
-    label{labelCmp} {
+    targetBoundingBox{alignBounds} {
 
 }
 
-void AlignLabel::LoadFromJSON(const nlohmann::json& json) {
+void Alignable::LoadFromJSON(const nlohmann::json& json) {
     const auto& findAlignment{json.find("alignment")};
     if(findAlignment != json.end()) {
         std::string alignmentName{findAlignment.value().template get<std::string>()};
@@ -23,7 +23,7 @@ void AlignLabel::LoadFromJSON(const nlohmann::json& json) {
     }
 }
 
-nlohmann::json AlignLabel::SaveToJSON() const {
+nlohmann::json Alignable::SaveToJSON() const {
     std::string alignmentName{AlignmentNames.at((int)alignment)};
     const nlohmann::json output{
         {"alignment", alignmentName}
@@ -31,30 +31,30 @@ nlohmann::json AlignLabel::SaveToJSON() const {
     return output;
 }
 
-Alignment AlignLabel::GetAlignment() const {
+Alignment Alignable::GetAlignment() const {
     return alignment;
 }
 
-void AlignLabel::SetAlignment(Alignment align) {
+void Alignable::SetAlignment(Alignment align) {
     alignment = align;
 }
 
-Label& AlignLabel::GetLabel() const {
-    return label;
+const BoundingBox& Alignable::GetTargetBoundingBox() const {
+    return targetBoundingBox;
 }
 
-void AlignLabelMgr::Add(Entity owner, Alignment align, Label& labelCmp) {
-    alignLabelMap.insert(std::make_pair(owner, std::make_unique<AlignLabel>(owner, align, labelCmp)));
+void AlignableMgr::Add(Entity owner, Alignment align, const BoundingBox& bounds) {
+    alignLabelMap.insert(std::make_pair(owner, std::make_unique<Alignable>(owner, align, bounds)));
 }
 
-void AlignLabelMgr::Remove(Entity owner) {
+void AlignableMgr::Remove(Entity owner) {
     const auto& iter{alignLabelMap.find(owner)};
     if(iter != alignLabelMap.end()) {
         alignLabelMap.erase(iter);
     }
 }
 
-AlignLabel* AlignLabelMgr::Get(Entity owner) {
+Alignable* AlignableMgr::Get(Entity owner) {
     const auto& iter{alignLabelMap.find(owner)};
     if(iter != alignLabelMap.end()) {
         return iter->second.get();
@@ -62,8 +62,8 @@ AlignLabel* AlignLabelMgr::Get(Entity owner) {
     return nullptr;
 }
 
-std::vector<AlignLabel*> AlignLabelMgr::GetList() const {
-    std::vector<AlignLabel*>        alignLabelList;
+std::vector<Alignable*> AlignableMgr::GetList() const {
+    std::vector<Alignable*>        alignLabelList;
     for(const auto& alignLabel : alignLabelMap) {
         alignLabelList.push_back(alignLabel.second.get());
     }

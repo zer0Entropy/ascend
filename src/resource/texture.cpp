@@ -34,3 +34,7 @@ sf::Texture& Texture::GetDestTexture() const {
 Texture::Style Texture::GetStyle() const {
     return style;
 }
+
+const sf::Vector2u Texture::GetSize() const {
+    return texture.getSize();
+}

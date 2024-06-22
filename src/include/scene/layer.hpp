@@ -11,7 +11,8 @@ struct Layer {
         Music,
         Decoration,
         MenuButton,
-        MenuLabel
+        MenuLabel,
+        TitleBarLabel
     };
 
     int                                 index;

@@ -48,6 +48,7 @@ private:
     void                                    CreateDecorations(Layer& layer);
     void                                    CreateMenuButtons(Layer& layer);
     void                                    CreateMenuLabels(Layer& layer);
+    void                                    CreateTitleBarLabel(Layer& layer);
     void                                    CreateSoundEffects(Layer& layer);
     void                                    PlayBackgroundMusic(Layer &layer);
 

@@ -24,9 +24,9 @@ add_executable(ascend       src/main.cpp
                             src/core/music.cpp
                             src/core/sound.cpp
                             src/component/boundingBox.cpp
-                            src/component/alignLabel.cpp
+                            src/component/alignable.cpp
                             src/component/label.cpp
-                            src/component/renderLayer.cpp
+                            src/component/layerIndex.cpp
                             src/component/renderable.cpp
                             src/component/sprite.cpp
                             src/component/text.cpp

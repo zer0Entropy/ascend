@@ -1,18 +1,33 @@
 #include "../include/component/scale.hpp"
+#include "../include/component/sprite.hpp"
+#include "../include/component/text.hpp"
 #include "../include/resource/texture.hpp"
 
-ScaleRenderable::ScaleRenderable(Entity cEntity, const BoundingBox& boundsCmp, Sprite& spriteCmp):
+ScaleRenderable::ScaleRenderable(Entity cEntity, const Renderable& renderableCmp):
     Component{Component::TypeID::ScaleRenderable, cEntity},
-    boundingBox{boundsCmp},
-    sprite{spriteCmp} {
-    
-    const auto& attachments{sprite.GetAttachments()};
-    if(!attachments.empty()) {
-        Resource* attachedResource{*attachments.begin()};
-        Texture* texture{dynamic_cast<Texture*>(attachedResource)};
-        const auto& textureSize{texture->GetTexture().getSize()};
-        scalingFactor.x = (float)boundingBox.GetWidth() / (float)textureSize.x;
-        scalingFactor.y = (float)boundingBox.GetHeight() / (float)textureSize.y;
+    renderable{renderableCmp} {
+    // Acquire originalSize from the Sprite or Text pointed to by renderable->drawable
+    sf::Vector2u originalSize{0, 0};
+    Sprite* sprite{renderableCmp.GetSprite()};
+    if(sprite) {
+        originalSize.x = sprite->GetSprite().getGlobalBounds().width;
+        originalSize.y = sprite->GetSprite().getGlobalBounds().height;
+    }
+
+    // targetSize is defined by our BoundingBox
+    const BoundingBox& boundingBox{renderable.GetBounds()};
+    const sf::Vector2u targetSize{
+        boundingBox.GetRect().width,
+        boundingBox.GetRect().height
+    };
+
+    if(originalSize.x > 0 && originalSize.y > 0) {
+        scalingFactor.x = (float)targetSize.x / (float)originalSize.x;
+        scalingFactor.y = (float)targetSize.y / (float)originalSize.y;
+    }
+    else {
+        scalingFactor.x = 1.0f;
+        scalingFactor.y = 1.0f;
     }
 }
 
@@ -28,8 +43,8 @@ const sf::Vector2f& ScaleRenderable::GetScalingFactor() const {
     return scalingFactor;
 }
 
-void ScaleRenderableMgr::Add(Entity owner, const BoundingBox& boundsCmp, Sprite& spriteCmp) {
-    scaleMap.insert(std::make_pair(owner, std::make_unique<ScaleRenderable>(owner, boundsCmp, spriteCmp)));
+void ScaleRenderableMgr::Add(Entity owner, const Renderable& renderableCmp) {
+    scaleMap.insert(std::make_pair(owner, std::make_unique<ScaleRenderable>(owner, renderableCmp)));
 }
 
 void ScaleRenderableMgr::Remove(Entity owner) {

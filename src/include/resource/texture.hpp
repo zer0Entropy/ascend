@@ -39,6 +39,8 @@ public:
     const sf::Texture&      GetTexture() const;
 
     Style                   GetStyle() const;
+
+    const sf::Vector2u      GetSize() const;
     
 protected:
     sf::Texture&            GetDestTexture() const;

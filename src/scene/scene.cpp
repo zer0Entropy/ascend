@@ -33,6 +33,9 @@ void Scene::LoadFromJSON(const nlohmann::json& json) {
         else if(layer.typeID == Layer::TypeID::MenuLabel) {
             CreateMenuLabels(layer);
         }
+        else if(layer.typeID == Layer::TypeID::TitleBarLabel) {
+            CreateTitleBarLabel(layer);
+        }
     }
 }
 
@@ -199,26 +202,27 @@ void Scene::CreateDecorations(Layer& layer) {
         ResourceID attachmentID{layer.spriteAttachments.at(index - firstEntity)};
         Resource* attachment{resourceMgr.GetTexture(attachmentID)};
         sprite.Attach(attachment);
-        if(     attachment->GetTypeID() == Resource::TypeID::SimpleTexture
-            ||  attachment->GetTypeID() == Resource::TypeID::CompositeTexture
-            ||  attachment->GetTypeID() == Resource::TypeID::RepeatingTexture) {
-            Texture* texture{dynamic_cast<Texture*>(attachment)};
-            const auto& textureSize{texture->GetTexture().getSize()};
-            BoundingBox& bounds{*boundingBoxMgr.Get((Entity)index)};
-            if(     textureSize.x < bounds.GetWidth()
-                ||  textureSize.y < bounds.GetHeight()) {
-                scaleRenderableMgr.Add((Entity)index, bounds, sprite);
-            }
-        }
         index++;
     }
-    auto& renderLayerMgr{Application::GetInstance().GetRenderSystem()->GetRenderLayerMgr()};
+    auto& layerIndexMgr{Application::GetInstance().GetRenderSystem()->GetLayerIndexMgr()};
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     for(int entityIndex = firstEntity; entityIndex < firstEntity + layer.entities.size(); ++entityIndex) {
-        renderLayerMgr.Add((sceneIndex * 100) + layer.index,(Entity)entityIndex);
-        renderableMgr.Add(  (Entity)entityIndex,
-                            *boundingBoxMgr.Get(entityIndex),
-                            *spriteMgr.Get(entityIndex));
+        Sprite* sprite{spriteMgr.Get((Entity)entityIndex)};
+        BoundingBox* boundingBox{boundingBoxMgr.Get(entityIndex)};
+        if(sprite && boundingBox) {
+            layerIndexMgr.Add((sceneIndex * 100) + layer.index, (Entity)entityIndex);
+            renderableMgr.Add(  (Entity)entityIndex,
+                                *layerIndexMgr.Get((Entity)entityIndex),
+                                *boundingBoxMgr.Get((Entity)entityIndex),
+                                *sprite);
+            auto bounds{boundingBox->GetRect()};
+            Resource*           attachedResource{sprite->GetAttachments().at(0)};
+            Texture&            texture{*dynamic_cast<Texture*>(attachedResource)};
+            if(     texture.GetSize().x < bounds.width
+                ||  texture.GetSize().y < bounds.height) {
+                scaleRenderableMgr.Add((Entity)entityIndex, *renderableMgr.Get(((Entity)entityIndex)));
+            }
+        }
     }
 }
 
@@ -247,17 +251,6 @@ void Scene::CreateMenuButtons(Layer& layer) {
         ResourceID attachmentID{layer.spriteAttachments.at(index - firstEntity)};
         Resource* attachment{resourceMgr.GetTexture(attachmentID)};
         sprite.Attach(attachment);
-        if(     attachment->GetTypeID() == Resource::TypeID::SimpleTexture
-            ||  attachment->GetTypeID() == Resource::TypeID::CompositeTexture
-            ||  attachment->GetTypeID() == Resource::TypeID::RepeatingTexture) {
-            Texture* texture{dynamic_cast<Texture*>(attachment)};
-            const auto& textureSize{texture->GetTexture().getSize()};
-            BoundingBox& bounds{*boundingBoxMgr.Get((Entity)index)};
-            if(     textureSize.x < bounds.GetWidth()
-                ||  textureSize.y < bounds.GetHeight()) {
-                scaleRenderableMgr.Add((Entity)index, bounds, sprite);
-            }
-        }
         index++;
     }
     for(const auto entity : layer.entities) {
@@ -276,13 +269,25 @@ void Scene::CreateMenuButtons(Layer& layer) {
             eventSystem.Subscribe(&textureSwitcher, textureSwitch.first);
         }
     }
-    auto& renderLayerMgr{Application::GetInstance().GetRenderSystem()->GetRenderLayerMgr()};
+    auto& layerIndexMgr{Application::GetInstance().GetRenderSystem()->GetLayerIndexMgr()};
     auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
     for(int entityIndex = (int)firstEntity; entityIndex < (int)firstEntity + layer.entities.size(); ++entityIndex) {
-        renderLayerMgr.Add((sceneIndex * 100) + layer.index,(Entity)entityIndex);
-        renderableMgr.Add(  (Entity)entityIndex,
-                            *boundingBoxMgr.Get(entityIndex),
-                            *spriteMgr.Get(entityIndex));
+        Sprite* sprite{spriteMgr.Get((Entity)entityIndex)};
+        BoundingBox* boundingBox{boundingBoxMgr.Get((Entity)entityIndex)};
+        if(sprite && boundingBox) {
+            layerIndexMgr.Add((sceneIndex * 100) + layer.index, (Entity)entityIndex);
+            renderableMgr.Add(  (Entity)entityIndex,
+                                *layerIndexMgr.Get((Entity)entityIndex),
+                                *boundingBoxMgr.Get((Entity)entityIndex),
+                                *sprite);
+            auto bounds{boundingBox->GetRect()};
+            Resource*           attachedResource{sprite->GetAttachments().at(0)};
+            Texture&            texture{*dynamic_cast<Texture*>(attachedResource)};
+            if(     texture.GetSize().x < bounds.width
+                ||  texture.GetSize().y < bounds.height) {
+                scaleRenderableMgr.Add((Entity)entityIndex, *renderableMgr.Get(((Entity)entityIndex)));
+            }
+        }
     }
     CreateSoundEffects(layer);
 }
@@ -291,36 +296,87 @@ void Scene::CreateMenuLabels(Layer& layer) {
     /*  A MenuLabel layer has:
             A list of ResourceTokens {ResourceID, path} for loading Fonts
             A list of Texts {std::string, FontParameters, ResourceID for Font to attach}
-            A list of AlignLabels {Alignment}
+            A list of Alignables {Alignment}
     */
     LabelMgr& labelMgr{Application::GetInstance().GetRenderSystem()->GetLabelMgr()};
-    AlignLabelMgr& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignLabelMgr()};
+    AlignableMgr& alignLabelMgr{Application::GetInstance().GetRenderSystem()->GetAlignableMgr()};
     std::string buttonLayerName{"MenuButtonLayer"};
     const auto buttonLayerPtr{GetLayer(buttonLayerName)};
     if(!buttonLayerPtr) {
         return;
     }
     Layer& buttonLayer{*buttonLayerPtr};
+    std::vector<std::pair<Entity, Entity>>  labelButtonPairs; 
     for(int index = 0; index < buttonLayer.entities.size(); ++index) {
-        layer.entities.push_back(buttonLayer.entities.at(index));
+        Entity label{entityMgr.CreateEntity()};
+        Entity button{buttonLayer.entities.at(index)};
+        layer.entities.push_back(label);
+        labelButtonPairs.push_back(std::make_pair(label, button));
     }
-    Entity firstEntity{*layer.entities.begin()};
-    int index = (int)firstEntity;
-    for(const auto& textString : layer.textContents) {
-        const auto& fontParam{layer.fontParameters.at(index - (int)firstEntity)};
-        ResourceID attachmentID(layer.textAttachments.at(index - (int)firstEntity));
+    Entity firstLabel{*layer.entities.begin()};
+    int index = (int)firstLabel;
+    for(const auto& labelButtonPair : labelButtonPairs) {
+        Entity label{labelButtonPair.first};
+        Entity button{labelButtonPair.second};
+        const auto& fontParam{layer.fontParameters.at(index - (int)firstLabel)};
+        ResourceID attachmentID(layer.textAttachments.at(index - (int)firstLabel));
         Resource* attachment{resourceMgr.GetFont(attachmentID)};
-        textMgr.Add((Entity)index);
-        Text& text{*textMgr.Get((Entity)index)};
+        textMgr.Add(label);
+        Text& text{*textMgr.Get(label)};
         text.Attach(attachment);
         text.SetFontParameters(fontParam);
-        text.SetContents(textString);
-        menu.options.push_back(MenuOption{(Entity)index, textString});
-        BoundingBox& boundingBox{*boundingBoxMgr.Get((Entity)index)};
-        labelMgr.Add((Entity)index, boundingBox, text);
-        alignLabelMgr.Add((Entity)index, layer.labelAlignments.at(index - (int)firstEntity), *labelMgr.Get((Entity)index));
+        std::string contents{layer.textContents.at(index - (int)firstLabel)};
+        text.SetContents(contents);
+        menu.options.push_back(MenuOption{label, contents});
+        BoundingBox& buttonBoundingBox{*boundingBoxMgr.Get(button)};
+        boundingBoxMgr.Add(label, buttonBoundingBox.GetRect());
         index++;
     }
+    auto& layerIndexMgr{Application::GetInstance().GetRenderSystem()->GetLayerIndexMgr()};
+    auto& renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
+    auto& alignableMgr{Application::GetInstance().GetRenderSystem()->GetAlignableMgr()};
+    for(const auto& labelButtonPair : labelButtonPairs) {
+        Entity label{labelButtonPair.first};
+        Entity button{labelButtonPair.second};
+        Text* text{textMgr.Get(label)};
+        BoundingBox* boundingBox{boundingBoxMgr.Get(label)};
+        if(text && boundingBox) {
+            layerIndexMgr.Add((sceneIndex * 100) + layer.index, label);
+            renderableMgr.Add(  label,
+                                *layerIndexMgr.Get(label),
+                                *boundingBoxMgr.Get(label),
+                                *text);
+            alignableMgr.Add(label, Alignment::Center, *boundingBoxMgr.Get(button));
+        }
+    }
+}
+void Scene::CreateTitleBarLabel(Layer& layer) {
+    std::string                             titleBarLayerName{"TitleBarLayer"};
+    const auto                              titleBarLayerPtr{GetLayer(titleBarLayerName)};
+    if(!titleBarLayerPtr) {
+        return;
+    }
+    Layer&                                  titleBarLayer{*titleBarLayerPtr};
+    Entity                                  titleBar{titleBarLayer.entities.at(0)};
+
+    Entity                                  titleBarLabel{entityMgr.CreateEntity()};
+    layer.entities.push_back(titleBarLabel);
+    textMgr.Add(titleBarLabel);
+    Text&                                   text{*textMgr.Get(titleBarLabel)};
+    ResourceID                              attachmentID{layer.textAttachments.at(0)};
+    Resource*                               attachment{resourceMgr.GetFont(attachmentID)};
+    text.Attach(attachment);
+    text.SetFontParameters(layer.fontParameters.at(0));
+    text.SetContents(layer.textContents.at(0));
+    auto&                                   renderableMgr{Application::GetInstance().GetRenderSystem()->GetRenderableMgr()};
+    auto&                                   alignableMgr{Application::GetInstance().GetRenderSystem()->GetAlignableMgr()};
+    auto&                                   layerIndexMgr{Application::GetInstance().GetRenderSystem()->GetLayerIndexMgr()};
+    layerIndexMgr.Add((sceneIndex * 100) + layer.index, titleBarLabel);
+            renderableMgr.Add(  titleBarLabel,
+                                *layerIndexMgr.Get(titleBarLabel),
+                                *boundingBoxMgr.Get(titleBarLabel),
+                                text);
+    alignableMgr.Add(titleBarLabel, layer.labelAlignments.at(0), *boundingBoxMgr.Get(titleBar));
 }
 
 void Scene::CreateSoundEffects(Layer& layer) {

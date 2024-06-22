@@ -39,7 +39,7 @@ std::vector<Layer> SceneParser::LoadLayers() {
         layer.textAttachments = LoadTextAttachments(index);
         layer.textContents =    LoadTextContents(index);
         layer.fontParameters =  LoadFontParam(index);
-        layer.labelAlignments = LoadLabelAlignments(index);
+        layer.labelAlignments = LoadAlignments(index);
         layer.textureSwitches = LoadTextureSwitches(index);
         layer.soundEffects =    LoadSoundEffects(index);
         layer.backgroundMusicID = LoadBackgroundMusic(index);
@@ -64,6 +64,9 @@ Layer::TypeID SceneParser::LoadLayerType(int index) {
         }
         else if(typeName.compare("menuLabel") == 0) {
             return Layer::TypeID::MenuLabel;
+        }
+        else if(typeName.compare("titleBarLabel") == 0) {
+            return Layer::TypeID::TitleBarLabel;
         }
     }
     return Layer::TypeID::Null;
@@ -437,18 +440,18 @@ Music::PlaybackParam SceneParser::LoadPlaybackParam(int index) const {
     return param;
 }
 
-std::vector<Alignment> SceneParser::LoadLabelAlignments(int index) const {
+std::vector<Alignment> SceneParser::LoadAlignments(int index) const {
     const auto&                                     json{layerJSONList.at(index)};
     std::vector<Alignment>                          alignmentList;
-    const auto&                                     findAlignLabels{json.find("alignLabels")};
-    if(findAlignLabels == json.end()) {
+    const auto&                                     findAlignables{json.find("alignments")};
+    if(findAlignables == json.end()) {
         return alignmentList;
     }
-    const auto&                                     alignLabelsJSON{findAlignLabels.value()};
-    for(const auto& alignLabel : alignLabelsJSON) {
-        const auto&                                 findAlignment{alignLabel.find("alignment")};
-        if(findAlignment != alignLabel.end()) {
-            alignmentList.push_back(GetAlignment(findAlignment.value().template get<std::string>()));
+    const auto&                                     alignmentsJSON{findAlignables.value()};
+    for(const auto& alignLabel : alignmentsJSON) {
+        const auto&                                 findAlign{alignLabel.find("align")};
+        if(findAlign != alignLabel.end()) {
+            alignmentList.push_back(GetAlignment(findAlign.value().template get<std::string>()));
         }
     }
     return alignmentList;

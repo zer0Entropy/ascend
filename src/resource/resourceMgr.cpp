@@ -219,7 +219,7 @@ Texture* ResourceMgr::LoadTexture(  const ResourceID& resourceID,
         CompositeTexture& composite{*dynamic_cast<CompositeTexture*>(GetTexture(resourceID))};
         int index = 0;
         for(const auto& destination : destinations) {
-            composite.AddTexture(sourceTextures[index]->GetTexture(), destination);
+            composite.AddTexture(sourceTextures[index++]->GetTexture(), destination);
         }
         std::string msg{"Texture \"" + resourceID + "\" successfully loaded (as a composite of previously-loaded textures)."};
         this->PublishMsg(msg);

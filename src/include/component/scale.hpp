@@ -4,7 +4,7 @@
 
 class ScaleRenderable: public Component {
 public:
-    ScaleRenderable(Entity cEntity, const BoundingBox& boundsCmp, Sprite& spriteCmp);
+    ScaleRenderable(Entity cEntity, const Renderable& renderableCmp);
 
     void                            LoadFromJSON(const nlohmann::json& json) override;
     
@@ -13,13 +13,12 @@ public:
     const sf::Vector2f&             GetScalingFactor() const;
 private:
     sf::Vector2f                    scalingFactor;
-    const BoundingBox&              boundingBox;
-    Sprite&                         sprite;
+    const Renderable&               renderable;
 };
 
 class ScaleRenderableMgr {
 public:
-    void                            Add(Entity owner, const BoundingBox& boundsCmp, Sprite& spriteCmp);
+    void                            Add(Entity owner, const Renderable& renderableCmp);
 
     void                            Remove(Entity owner);
 
